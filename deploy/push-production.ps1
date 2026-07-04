@@ -2,7 +2,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$keyPath = Join-Path $repoRoot ".deploy-keys\simulacro-production.key"
+$keyPath = Join-Path $repoRoot ".deploy-keys\simulacro-production-agent.key"
 
 if (-not (Test-Path $keyPath)) {
     throw "No se encontro la llave de despliegue en $keyPath"

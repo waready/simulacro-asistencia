@@ -65,7 +65,7 @@ Comando habitual luego de la configuracion:
 
 Ese script hace:
 
-- usa la llave de despliegue local guardada en `.deploy-keys/simulacro-production.key`
+- usa la llave de despliegue local guardada en `.deploy-keys/simulacro-production-agent.key`
 - empuja `HEAD` hacia `production`
 - dispara el hook del servidor
 - reinicia la API automaticamente
