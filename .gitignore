@@ -1,0 +1,10 @@
+.env
+.venv/
+.deploy-keys/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+simulacro-deploy.tar.gz
+data/*.sql

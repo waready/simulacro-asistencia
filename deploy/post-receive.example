@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="/opt/simulacro-api"
+REPO_DIR="/opt/simulacro-api.git"
+BRANCH="master"
+
+while read -r oldrev newrev refname; do
+  if [ "$refname" != "refs/heads/$BRANCH" ]; then
+    echo "Saltando $refname"
+    continue
+  fi
+
+  mkdir -p "$APP_DIR"
+  GIT_WORK_TREE="$APP_DIR" git --git-dir="$REPO_DIR" checkout -f "$BRANCH"
+
+  cd "$APP_DIR"
+
+  if [ ! -d .venv ]; then
+    python3 -m venv .venv
+    .venv/bin/pip install --upgrade pip
+    .venv/bin/pip install -r requirements.txt
+  elif git --git-dir="$REPO_DIR" diff-tree --no-commit-id --name-only -r "$newrev" | grep -qx "requirements.txt"; then
+    .venv/bin/pip install -r requirements.txt
+  fi
+
+  .venv/bin/python -m py_compile \
+    app/config.py \
+    app/importer.py \
+    app/main.py \
+    app/mysql_loader.py \
+    app/mysql_storage.py \
+    app/repository.py \
+    app/schemas.py
+
+  systemctl restart simulacro-api
+  systemctl --quiet is-active simulacro-api
+  echo "Deploy completado en $APP_DIR"
+done

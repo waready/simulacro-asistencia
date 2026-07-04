@@ -27,6 +27,8 @@ Prueba local hecha antes del despliegue:
 - `deploy/simulacro-api.service.example`
 - `deploy/nginx-simulacro.conf.example`
 - `deploy/install-ubuntu.sh.example`
+- `deploy/post-receive.example`
+- `deploy/push-production.ps1`
 
 ## Pasos
 
@@ -45,6 +47,30 @@ Para un Droplet basico:
 ```
 
 Para este proyecto recomiendo `--workers 1` porque ya responde rapido y asi la `asistencia` se refleja al instante en el mismo proceso.
+
+## Despliegue rapido por Git
+
+Flujo recomendado para este proyecto:
+
+1. Mantener GitHub como `origin`.
+2. Agregar el servidor como remoto `production`.
+3. Dejar un repositorio bare en el server, por ejemplo `/opt/simulacro-api.git`.
+4. Usar un `post-receive hook` para actualizar `/opt/simulacro-api` y reiniciar `simulacro-api`.
+
+Comando habitual luego de la configuracion:
+
+```powershell
+.\deploy\push-production.ps1
+```
+
+Ese script hace:
+
+- usa la llave de despliegue local guardada en `.deploy-keys/simulacro-production.key`
+- empuja `HEAD` hacia `production`
+- dispara el hook del servidor
+- reinicia la API automaticamente
+
+De esa manera ya no hace falta volver a empaquetar el proyecto ni subir `.tar.gz`.
 
 ## Consumo recomendado desde Laravel
 
