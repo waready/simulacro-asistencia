@@ -73,7 +73,7 @@ def get_repository(request: Request) -> Repository:
     return request.app.state.repository
 
 
-@app.get("/", include_in_schema=False)
+@app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
 def panel_inicio() -> FileResponse:
     return FileResponse(
         PANEL_HTML_PATH,
@@ -81,7 +81,7 @@ def panel_inicio() -> FileResponse:
     )
 
 
-@app.get("/panel", include_in_schema=False)
+@app.api_route("/panel", methods=["GET", "HEAD"], include_in_schema=False)
 def panel_redirect() -> RedirectResponse:
     return RedirectResponse(url="/", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
