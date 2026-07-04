@@ -8,3 +8,4 @@ __pycache__/
 *.log
 simulacro-deploy.tar.gz
 data/*.sql
+data/simulacro_dataset.json
