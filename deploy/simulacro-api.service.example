@@ -1,0 +1,15 @@
+[Unit]
+Description=Simulacro FastAPI service
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/simulacro-api
+EnvironmentFile=/opt/simulacro-api/.env
+ExecStart=/opt/simulacro-api/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

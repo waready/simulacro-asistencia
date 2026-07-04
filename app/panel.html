@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>CEPREUNA | Control de Asistencia</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Sora:wght@400;600;700;800&display=swap");
+
+    :root {
+      --cepre-blue: #1150c5;
+      --cepre-navy: #07275d;
+      --cepre-gold: #f7b718;
+      --cepre-cream: #fff7dc;
+      --cepre-ink: #07111f;
+      --cepre-muted: #5e6b82;
+      --surface: rgba(255, 255, 255, 0.92);
+      --surface-strong: #ffffff;
+      --border-soft: rgba(10, 39, 93, 0.1);
+      --shadow-strong: 0 24px 60px rgba(6, 26, 70, 0.24);
+      --success: #0e9f6e;
+      --success-soft: #e5fff4;
+      --warning: #c98200;
+      --warning-soft: #fff6dd;
+      --danger: #c43636;
+      --danger-soft: #ffe8e8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(247, 183, 24, 0.22), transparent 34%),
+        radial-gradient(circle at top right, rgba(17, 80, 197, 0.25), transparent 40%),
+        linear-gradient(180deg, #eff6ff 0%, #fff8e8 48%, #f8fbff 100%);
+      color: var(--cepre-ink);
+      font-family: "Outfit", "Segoe UI", sans-serif;
+    }
+
+    body {
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: auto;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(0.5px);
+    }
+
+    body::before {
+      top: -4rem;
+      right: -3rem;
+      width: 13rem;
+      height: 13rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(17, 80, 197, 0.18), rgba(247, 183, 24, 0.12));
+    }
+
+    body::after {
+      bottom: 5rem;
+      left: -5rem;
+      width: 14rem;
+      height: 14rem;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(247, 183, 24, 0.15), rgba(17, 80, 197, 0.1));
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      padding: 1rem 1rem 1.6rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .hero,
+    .scan-card,
+    .recent-card,
+    .tips-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border-soft);
+      border-radius: 28px;
+      box-shadow: var(--shadow-strong);
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero {
+      padding: 1rem;
+      background:
+        linear-gradient(135deg, rgba(7, 39, 93, 0.95), rgba(17, 80, 197, 0.88)),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent);
+      color: #fff;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -3rem -4rem auto;
+      width: 12rem;
+      height: 12rem;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(247, 183, 24, 0.4), transparent 62%);
+      opacity: 0.9;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .brand-mark {
+      width: 100%;
+      max-width: 18rem;
+      color: #ffffff;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 1rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .hero-title {
+      margin: 0.9rem 0 0.35rem;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: 1.4rem;
+      line-height: 1.1;
+      font-weight: 800;
+    }
+
+    .hero-copy {
+      margin: 0;
+      max-width: 20rem;
+      color: rgba(255, 255, 255, 0.84);
+      font-size: 0.96rem;
+      line-height: 1.45;
+    }
+
+    .scan-card {
+      padding: 1rem;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 251, 240, 0.98));
+    }
+
+    .scan-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .section-kicker {
+      display: block;
+      margin-bottom: 0.18rem;
+      color: var(--cepre-blue);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      margin: 0;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: 1.16rem;
+      font-weight: 800;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-shrink: 0;
+      padding: 0.6rem 0.85rem;
+      border-radius: 999px;
+      background: #eef5ff;
+      color: var(--cepre-blue);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .status-dot {
+      width: 0.65rem;
+      height: 0.65rem;
+      border-radius: 999px;
+      background: currentColor;
+      box-shadow: 0 0 0 6px rgba(17, 80, 197, 0.12);
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      70% { transform: scale(1.15); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .scan-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .input-shell {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      min-height: 4.45rem;
+      padding: 0.75rem 0.85rem 0.75rem 0.95rem;
+      border-radius: 24px;
+      background: var(--surface-strong);
+      border: 1px solid rgba(17, 80, 197, 0.15);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75);
+    }
+
+    .input-shell:focus-within {
+      border-color: rgba(17, 80, 197, 0.45);
+      box-shadow:
+        0 0 0 4px rgba(17, 80, 197, 0.12),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+    }
+
+    .scan-icon {
+      width: 2.7rem;
+      height: 2.7rem;
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(17, 80, 197, 0.12), rgba(247, 183, 24, 0.18));
+      color: var(--cepre-blue);
+    }
+
+    .scan-icon svg {
+      width: 1.3rem;
+      height: 1.3rem;
+    }
+
+    .scan-input-wrap {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .scan-label {
+      display: block;
+      margin-bottom: 0.18rem;
+      color: var(--cepre-muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .scan-input {
+      width: 100%;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--cepre-ink);
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+    }
+
+    .scan-input::placeholder {
+      color: rgba(94, 107, 130, 0.55);
+      letter-spacing: 0.08em;
+    }
+
+    .submit-row {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .submit-button,
+    .ghost-button,
+    .modal-button {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+      font-family: "Sora", "Outfit", sans-serif;
+    }
+
+    .submit-button {
+      flex: 1;
+      min-height: 3.7rem;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--cepre-blue), #06368c);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 800;
+      box-shadow: 0 16px 34px rgba(17, 80, 197, 0.26);
+    }
+
+    .submit-button:active,
+    .ghost-button:active,
+    .modal-button:active {
+      transform: translateY(1px) scale(0.995);
+    }
+
+    .ghost-button {
+      min-width: 3.7rem;
+      min-height: 3.7rem;
+      border-radius: 22px;
+      background: rgba(17, 80, 197, 0.08);
+      color: var(--cepre-blue);
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .helper-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .helper-card {
+      padding: 0.85rem 0.9rem;
+      border-radius: 20px;
+      background: rgba(7, 39, 93, 0.04);
+      border: 1px solid rgba(7, 39, 93, 0.06);
+    }
+
+    .helper-card strong {
+      display: block;
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--cepre-navy);
+    }
+
+    .helper-card span {
+      display: block;
+      margin-top: 0.18rem;
+      color: var(--cepre-muted);
+      font-size: 0.82rem;
+      line-height: 1.3;
+    }
+
+    .recent-card,
+    .tips-card {
+      padding: 1rem;
+    }
+
+    .recent-list {
+      list-style: none;
+      margin: 0.95rem 0 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .recent-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 0.75rem;
+      align-items: center;
+      padding: 0.78rem 0.85rem;
+      border-radius: 20px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(247, 250, 255, 0.92));
+      border: 1px solid rgba(7, 39, 93, 0.08);
+    }
+
+    .recent-rank {
+      width: 2.45rem;
+      height: 2.45rem;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(17, 80, 197, 0.14), rgba(247, 183, 24, 0.22));
+      color: var(--cepre-blue);
+      font-weight: 800;
+    }
+
+    .recent-meta strong {
+      display: block;
+      font-size: 0.98rem;
+      font-weight: 800;
+    }
+
+    .recent-meta span {
+      display: block;
+      margin-top: 0.14rem;
+      color: var(--cepre-muted);
+      font-size: 0.8rem;
+    }
+
+    .recent-room {
+      padding: 0.42rem 0.7rem;
+      border-radius: 999px;
+      background: var(--cepre-cream);
+      color: #9a6200;
+      font-size: 0.8rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      margin-top: 0.95rem;
+      padding: 1rem;
+      border-radius: 22px;
+      background: rgba(7, 39, 93, 0.04);
+      color: var(--cepre-muted);
+      font-size: 0.92rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .tips-card {
+      background: linear-gradient(180deg, rgba(255, 247, 220, 0.92), rgba(255, 255, 255, 0.88));
+    }
+
+    .tips-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      margin-top: 0.9rem;
+      color: var(--cepre-muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .tip-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+    }
+
+    .tip-bullet {
+      width: 1.4rem;
+      height: 1.4rem;
+      flex-shrink: 0;
+      margin-top: 0.12rem;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: rgba(247, 183, 24, 0.22);
+      color: #9a6200;
+      font-size: 0.8rem;
+      font-weight: 800;
+    }
+
+    .toast {
+      position: fixed;
+      left: 1rem;
+      right: 1rem;
+      bottom: 1rem;
+      z-index: 40;
+      transform: translateY(120%);
+      opacity: 0;
+      transition: transform 0.26s ease, opacity 0.26s ease;
+      padding: 1rem 1rem 1rem 1.05rem;
+      border-radius: 22px;
+      border: 1px solid transparent;
+      box-shadow: 0 22px 40px rgba(6, 20, 45, 0.26);
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .toast.error {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border-color: rgba(196, 54, 54, 0.16);
+    }
+
+    .toast.info {
+      background: rgba(17, 80, 197, 0.1);
+      color: var(--cepre-blue);
+      border-color: rgba(17, 80, 197, 0.14);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0.9rem;
+      background: rgba(5, 15, 35, 0.56);
+      backdrop-filter: blur(10px);
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      position: relative;
+      width: 100%;
+      max-width: 30rem;
+      border-radius: 34px;
+      overflow: hidden;
+      box-shadow: 0 35px 80px rgba(5, 15, 35, 0.35);
+      transform: translateY(22px) scale(0.98);
+      opacity: 0;
+      transition: transform 0.24s ease, opacity 0.24s ease;
+      background: #fff;
+    }
+
+    .modal-backdrop.open .modal-card {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .modal-card.state-success {
+      background:
+        radial-gradient(circle at top right, rgba(14, 159, 110, 0.14), transparent 38%),
+        linear-gradient(180deg, #ffffff, #f7fffb 88%);
+    }
+
+    .modal-card.state-warning {
+      background:
+        radial-gradient(circle at top right, rgba(201, 130, 0, 0.16), transparent 38%),
+        linear-gradient(180deg, #ffffff, #fffaf0 88%);
+    }
+
+    .modal-watermark {
+      position: absolute;
+      right: -2rem;
+      bottom: -2rem;
+      width: 11rem;
+      opacity: 0.08;
+      color: var(--cepre-blue);
+      pointer-events: none;
+    }
+
+    .modal-content {
+      position: relative;
+      z-index: 1;
+      padding: 1.1rem 1.1rem 1.2rem;
+    }
+
+    .modal-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.7rem;
+    }
+
+    .modal-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.56rem 0.82rem;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .modal-state.success {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .modal-state.warning {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    .modal-close {
+      appearance: none;
+      border: 0;
+      width: 2.8rem;
+      height: 2.8rem;
+      border-radius: 18px;
+      background: rgba(7, 39, 93, 0.06);
+      color: var(--cepre-navy);
+      font-size: 1.25rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .modal-room {
+      margin: 1rem 0 0.25rem;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: clamp(3rem, 18vw, 5rem);
+      line-height: 0.92;
+      letter-spacing: -0.06em;
+      font-weight: 800;
+      color: var(--cepre-navy);
+    }
+
+    .modal-name {
+      margin: 0.2rem 0 0;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: 1.34rem;
+      line-height: 1.15;
+      font-weight: 800;
+      text-wrap: balance;
+    }
+
+    .modal-detail-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.9rem;
+      align-items: center;
+      margin-top: 1rem;
+    }
+
+    .modal-dni {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      color: var(--cepre-muted);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .order-badge {
+      min-width: 5.4rem;
+      padding: 0.72rem 0.95rem;
+      border-radius: 24px;
+      text-align: center;
+      background: linear-gradient(135deg, rgba(247, 183, 24, 0.18), rgba(17, 80, 197, 0.12));
+      color: var(--cepre-blue);
+      font-family: "Sora", "Outfit", sans-serif;
+      font-weight: 800;
+    }
+
+    .order-badge strong {
+      display: block;
+      font-size: 1.38rem;
+      line-height: 1;
+    }
+
+    .order-badge span {
+      display: block;
+      margin-top: 0.18rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 1.05rem;
+    }
+
+    .modal-box {
+      padding: 0.85rem 0.9rem;
+      border-radius: 22px;
+      background: rgba(7, 39, 93, 0.04);
+      border: 1px solid rgba(7, 39, 93, 0.06);
+    }
+
+    .modal-box span {
+      display: block;
+      color: var(--cepre-muted);
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .modal-box strong {
+      display: block;
+      margin-top: 0.24rem;
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.1rem;
+    }
+
+    .modal-button {
+      flex: 1;
+      min-height: 3.4rem;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--cepre-blue), #0a3d9f);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 800;
+    }
+
+    .ghost-inline {
+      min-height: 3.4rem;
+      min-width: 3.7rem;
+      border-radius: 22px;
+      background: rgba(7, 39, 93, 0.06);
+      color: var(--cepre-navy);
+      font-size: 0.92rem;
+      font-weight: 800;
+    }
+
+    @media (min-width: 860px) {
+      .page {
+        max-width: 70rem;
+        margin: 0 auto;
+        padding: 1.2rem;
+      }
+
+      .desktop-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+        gap: 1rem;
+      }
+
+      .hero {
+        padding: 1.2rem 1.25rem;
+      }
+
+      .hero-title {
+        font-size: 1.85rem;
+      }
+
+      .scan-card,
+      .recent-card,
+      .tips-card {
+        padding: 1.1rem;
+      }
+
+      .modal-backdrop {
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="brand-row">
+        <svg class="brand-mark" viewBox="0 0 1020 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CEPREUNA">
+          <path d="M377 200C379.16 200 381 198.209 381 196V103C381 103 386 112 395 127L434 194C435.785 197.74 439.744 200 443 200H470V50H443C441.202 50 439 51.4941 439 54V148L421 116L385 55C383.248 51.8912 379.479 50 376 50H350V200H377Z" fill="currentColor"/>
+          <path d="M726 92H739C742.314 92 745 89.3137 745 86V60H773V92H800V116H773V159C773 169.5 778.057 174 787 174H800V200H783C759.948 200 745 185.071 745 160V116H726V92Z" fill="currentColor"/>
+          <path d="M591 92V154C591 168.004 585.742 179.809 578 188C570.258 196.191 559.566 200 545 200C530.434 200 518.742 196.191 511 188C503.389 179.809 498 168.004 498 154V92H514C517.412 92 520.769 92.622 523 95C525.231 97.2459 526 98.5652 526 102V154C526 162.059 526.457 167.037 530 171C533.543 174.831 537.914 176 545 176C552.217 176 555.457 174.831 559 171C562.543 167.037 563 162.059 563 154V102C563 98.5652 563.769 96.378 566 94C567.96 91.9107 570.028 91.9599 573 92C573.411 92.0055 574.586 92 575 92H591Z" fill="currentColor"/>
+          <path d="M676 144L710 92H684C680.723 92 677.812 93.1758 676 96L660 120L645 97C643.188 94.1758 639.277 92 636 92H611L645 143L608 200H634C637.25 200 640.182 196.787 642 194L660 167L679 195C680.818 197.787 683.75 200 687 200H713L676 144Z" fill="currentColor"/>
+          <path d="M168 200H279C282.542 200 285.932 198.756 289 197C292.068 195.244 295.23 193.041 297 190C298.77 186.959 300.002 183.51 300 179.999C299.998 176.488 298.773 173.04 297 170.001L222 41C220.23 37.96 218.067 35.7552 215 34C211.933 32.2448 207.542 31 204 31C200.458 31 197.067 32.2448 194 34C190.933 35.7552 188.77 37.96 187 41L168 74L130 9.99764C128.228 6.95784 126.068 3.75491 123 2C119.932 0.245087 116.542 0 113 0C109.458 0 106.068 0.245087 103 2C99.9323 3.75491 96.7717 6.95784 95 9.99764L2 170.001C0.226979 173.04 0.00154312 176.488 1.90993e-06 179.999C-0.0015393 183.51 0.229648 186.959 2 190C3.77035 193.04 6.93245 195.244 10 197C13.0675 198.756 16.4578 200 20 200H90C117.737 200 137.925 187.558 152 164L186 105L204 74L259 168H186L168 200ZM89 168H40L113 42L150 105L125.491 147.725C116.144 163.01 105.488 168 89 168Z" fill="#f7b718"/>
+          <path d="M958 60.0001H938C933.524 60.0001 929.926 59.9395 927 63C924.074 65.8905 925 67.5792 925 72V141C925 151.372 923.648 156.899 919 162C914.352 166.931 908.468 169 899 169C889.705 169 882.648 166.931 878 162C873.352 156.899 873 151.372 873 141V72.0001C873 67.5793 872.926 65.8906 870 63.0001C867.074 59.9396 863.476 60.0001 859 60.0001H840V141C840 159.023 845.016 173.458 855 184C865.156 194.542 879.893 200 899 200C918.107 200 932.844 194.542 943 184C953.156 173.458 958 159.023 958 141V60.0001Z" fill="#f7b718"/>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M1000 60.0233L1020 60V77L1020 128V156.007L1020 181L1020 189.004C1020 192.938 1019.98 194.429 1017 197.001C1014.02 199.725 1009.56 200 1005 200H986.001V181.006L986 130.012V70.0215C986 66.1576 986.016 64.5494 989 62.023C991.819 59.6358 995.437 60.0233 1000 60.0233Z" fill="#f7b718"/>
+        </svg>
+      </div>
+      <div class="hero-badge">
+        <span>Panel móvil</span>
+      </div>
+      <h1 class="hero-title">Control de asistencia para escaneo rápido</h1>
+      <p class="hero-copy">Enfocado para celular, lectura ágil por DNI y confirmación visual inmediata con salón, orden y estado del estudiante.</p>
+    </section>
+
+    <div class="desktop-grid">
+      <section class="scan-card">
+        <div class="scan-head">
+          <div>
+            <span class="section-kicker">Escaneo activo</span>
+            <h2 class="section-title">Registrar asistencia</h2>
+          </div>
+          <div class="status-pill" id="status-pill">
+            <span class="status-dot"></span>
+            <span id="status-text">Listo para escanear</span>
+          </div>
+        </div>
+
+        <form class="scan-form" id="scan-form" autocomplete="off">
+          <div class="input-shell">
+            <div class="scan-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M4 7V5a1 1 0 0 1 1-1h2M20 7V5a1 1 0 0 0-1-1h-2M4 17v2a1 1 0 0 0 1 1h2M20 17v2a1 1 0 0 1-1 1h-2M7 12h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="scan-input-wrap">
+              <label class="scan-label" for="dni-input">DNI del estudiante</label>
+              <input
+                id="dni-input"
+                class="scan-input"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                maxlength="16"
+                placeholder="Escanea o escribe el DNI"
+                autofocus
+              >
+            </div>
+          </div>
+
+          <div class="submit-row">
+            <button class="submit-button" id="submit-button" type="submit">Marcar asistencia</button>
+            <button class="ghost-button" id="clear-button" type="button" aria-label="Limpiar">×</button>
+          </div>
+        </form>
+
+        <div class="helper-grid">
+          <article class="helper-card">
+            <strong id="recent-count">0</strong>
+            <span>Registros mostrados en esta sesión</span>
+          </article>
+          <article class="helper-card">
+            <strong id="last-status">Esperando</strong>
+            <span>Último resultado del escaneo</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="recent-card">
+        <span class="section-kicker">Seguimiento</span>
+        <h2 class="section-title">Últimos llamados</h2>
+        <div class="empty-state" id="empty-state">Todavía no hay asistencias recientes en esta sesión. Apenas registres una, aparecerá aquí con su salón y número de orden.</div>
+        <ul class="recent-list" id="recent-list" hidden></ul>
+      </section>
+    </div>
+
+    <section class="tips-card">
+      <span class="section-kicker">Operación rápida</span>
+      <h2 class="section-title">Listo para lector o digitación manual</h2>
+      <div class="tips-list">
+        <div class="tip-row">
+          <div class="tip-bullet">1</div>
+          <div>El cursor vuelve al campo automáticamente después de cada registro para seguir escaneando sin tocar pantalla.</div>
+        </div>
+        <div class="tip-row">
+          <div class="tip-bullet">2</div>
+          <div>Cuando el DNI existe, se marca asistencia en una sola llamada y se abre un modal grande con salón, nombre, sede, área y número de orden.</div>
+        </div>
+        <div class="tip-row">
+          <div class="tip-bullet">3</div>
+          <div>Si el alumno ya fue marcado, el panel avisa claramente para evitar duplicados y aun así muestra su información clave.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast error" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="modal-backdrop" id="result-modal" aria-hidden="true">
+    <div class="modal-card state-success" id="modal-card">
+      <svg class="modal-watermark" viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M168 200H279C282.542 200 285.932 198.756 289 197C292.068 195.244 295.23 193.041 297 190C298.77 186.959 300.002 183.51 300 179.999C299.998 176.488 298.773 173.04 297 170.001L222 41C220.23 37.96 218.067 35.7552 215 34C211.933 32.2448 207.542 31 204 31C200.458 31 197.067 32.2448 194 34C190.933 35.7552 188.77 37.96 187 41L168 74L130 9.99764C128.228 6.95784 126.068 3.75491 123 2C119.932 0.245087 116.542 0 113 0C109.458 0 106.068 0.245087 103 2C99.9323 3.75491 96.7717 6.95784 95 9.99764L2 170.001C0.226979 173.04 0.00154312 176.488 1.90993e-06 179.999C-0.0015393 183.51 0.229648 186.959 2 190C3.77035 193.04 6.93245 195.244 10 197C13.0675 198.756 16.4578 200 20 200H90C117.737 200 137.925 187.558 152 164L186 105L204 74L259 168H186L168 200ZM89 168H40L113 42L150 105L125.491 147.725C116.144 163.01 105.488 168 89 168Z" fill="currentColor"/>
+      </svg>
+      <div class="modal-content">
+        <div class="modal-top">
+          <div class="modal-state success" id="modal-state">
+            <span id="modal-state-text">Asistencia registrada</span>
+          </div>
+          <button class="modal-close" id="modal-close" type="button" aria-label="Cerrar">×</button>
+        </div>
+
+        <div class="modal-room" id="modal-room">B-301</div>
+        <h3 class="modal-name" id="modal-name">Nombre del estudiante</h3>
+
+        <div class="modal-detail-row">
+          <div class="modal-dni">
+            <strong>DNI:</strong>
+            <span id="modal-dni">00000000</span>
+          </div>
+          <div class="order-badge">
+            <strong id="modal-order">1</strong>
+            <span>N° orden</span>
+          </div>
+        </div>
+
+        <div class="modal-grid">
+          <article class="modal-box">
+            <span>Área</span>
+            <strong id="modal-area">BIOMÉDICAS</strong>
+          </article>
+          <article class="modal-box">
+            <span>Sede</span>
+            <strong id="modal-sede">Puno</strong>
+          </article>
+          <article class="modal-box">
+            <span>Estado</span>
+            <strong id="modal-attendance">Presente</strong>
+          </article>
+          <article class="modal-box">
+            <span>Mensaje</span>
+            <strong id="modal-detail">Asistencia registrada correctamente.</strong>
+          </article>
+        </div>
+
+        <div class="modal-actions">
+          <button class="ghost-inline ghost-button" id="modal-scan-another" type="button">Seguir</button>
+          <button class="modal-button" id="modal-confirm" type="button">Listo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("scan-form");
+    const input = document.getElementById("dni-input");
+    const submitButton = document.getElementById("submit-button");
+    const clearButton = document.getElementById("clear-button");
+    const toast = document.getElementById("toast");
+    const statusText = document.getElementById("status-text");
+    const recentList = document.getElementById("recent-list");
+    const emptyState = document.getElementById("empty-state");
+    const recentCount = document.getElementById("recent-count");
+    const lastStatus = document.getElementById("last-status");
+    const modal = document.getElementById("result-modal");
+    const modalCard = document.getElementById("modal-card");
+    const modalState = document.getElementById("modal-state");
+    const modalStateText = document.getElementById("modal-state-text");
+    const modalRoom = document.getElementById("modal-room");
+    const modalName = document.getElementById("modal-name");
+    const modalDni = document.getElementById("modal-dni");
+    const modalArea = document.getElementById("modal-area");
+    const modalSede = document.getElementById("modal-sede");
+    const modalAttendance = document.getElementById("modal-attendance");
+    const modalDetail = document.getElementById("modal-detail");
+    const modalOrder = document.getElementById("modal-order");
+    const modalClose = document.getElementById("modal-close");
+    const modalConfirm = document.getElementById("modal-confirm");
+    const modalScanAnother = document.getElementById("modal-scan-another");
+
+    const recentEntries = [];
+    let toastTimer = null;
+    let modalTimer = null;
+
+    function sanitizeDni(value) {
+      return (value || "").replace(/\D+/g, "").slice(0, 16);
+    }
+
+    function setStatus(text) {
+      statusText.textContent = text;
+      lastStatus.textContent = text;
+    }
+
+    function queueFocus(delay = 60) {
+      window.clearTimeout(window.__focusTimer);
+      window.__focusTimer = window.setTimeout(() => {
+        if (document.hidden) return;
+        input.focus({ preventScroll: true });
+        input.setSelectionRange(input.value.length, input.value.length);
+      }, delay);
+    }
+
+    function closeModal() {
+      window.clearTimeout(modalTimer);
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+      queueFocus(90);
+    }
+
+    function showToast(message, type = "error") {
+      window.clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+      toastTimer = window.setTimeout(() => {
+        toast.classList.remove("show");
+      }, 3200);
+    }
+
+    function updateRecentList() {
+      recentCount.textContent = String(recentEntries.length);
+
+      if (recentEntries.length === 0) {
+        recentList.hidden = true;
+        emptyState.hidden = false;
+        recentList.innerHTML = "";
+        return;
+      }
+
+      emptyState.hidden = true;
+      recentList.hidden = false;
+      recentList.innerHTML = recentEntries.map((entry) => `
+        <li class="recent-item">
+          <div class="recent-rank">#${entry.numero_orden}</div>
+          <div class="recent-meta">
+            <strong>${entry.nombre}</strong>
+            <span>${entry.dni} · ${entry.area}</span>
+          </div>
+          <div class="recent-room">${entry.salon}</div>
+        </li>
+      `).join("");
+    }
+
+    function registerRecent(student) {
+      const existingIndex = recentEntries.findIndex((entry) => entry.dni === student.dni);
+      if (existingIndex >= 0) {
+        recentEntries.splice(existingIndex, 1);
+      }
+      recentEntries.unshift(student);
+      if (recentEntries.length > 8) {
+        recentEntries.length = 8;
+      }
+      updateRecentList();
+    }
+
+    function openModal(payload) {
+      const { alumno, updated, detail } = payload;
+      const alreadyMarked = !updated;
+
+      modalCard.classList.toggle("state-success", updated);
+      modalCard.classList.toggle("state-warning", alreadyMarked);
+      modalState.classList.toggle("success", updated);
+      modalState.classList.toggle("warning", alreadyMarked);
+      modalStateText.textContent = updated ? "Asistencia registrada" : "Asistencia ya marcada";
+      modalRoom.textContent = alumno.salon;
+      modalName.textContent = alumno.nombre;
+      modalDni.textContent = alumno.dni;
+      modalArea.textContent = alumno.area;
+      modalSede.textContent = alumno.sede;
+      modalAttendance.textContent = alumno.asistencia ? "Presente" : "Pendiente";
+      modalDetail.textContent = detail;
+      modalOrder.textContent = String(alumno.numero_orden);
+
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+
+      modalTimer = window.setTimeout(() => {
+        closeModal();
+      }, 4600);
+    }
+
+    async function registerAttendance(dni) {
+      submitButton.disabled = true;
+      setStatus("Buscando estudiante...");
+
+      try {
+        const response = await fetch("/panel/api/asistencia", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ dni })
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          const message = data.detail || "No se pudo registrar la asistencia.";
+          throw new Error(message);
+        }
+
+        setStatus(data.updated ? "Asistencia registrada" : "Asistencia ya marcada");
+        registerRecent(data.alumno);
+        openModal(data);
+        input.value = "";
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Error inesperado.";
+        setStatus("Error de lectura");
+        showToast(message, "error");
+      } finally {
+        submitButton.disabled = false;
+        queueFocus(60);
+      }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const dni = sanitizeDni(input.value);
+
+      if (dni.length < 8) {
+        showToast("Ingresa o escanea un DNI válido.", "error");
+        queueFocus();
+        return;
+      }
+
+      registerAttendance(dni);
+    });
+
+    input.addEventListener("input", () => {
+      const cleanValue = sanitizeDni(input.value);
+      if (input.value !== cleanValue) {
+        input.value = cleanValue;
+      }
+    });
+
+    input.addEventListener("blur", () => {
+      if (!modal.classList.contains("open")) {
+        queueFocus(90);
+      }
+    });
+
+    clearButton.addEventListener("click", () => {
+      input.value = "";
+      setStatus("Listo para escanear");
+      queueFocus();
+    });
+
+    modalClose.addEventListener("click", closeModal);
+    modalConfirm.addEventListener("click", closeModal);
+    modalScanAnother.addEventListener("click", closeModal);
+
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        queueFocus(80);
+      }
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && modal.classList.contains("open")) {
+        closeModal();
+      }
+    });
+
+    updateRecentList();
+    queueFocus(120);
+  </script>
+</body>
+</html>

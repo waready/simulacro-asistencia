@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_DIR="/opt/simulacro-api"
+APP_USER="www-data"
+APP_GROUP="www-data"
+DOMAIN="${1:-api-simulacro.tudominio.com}"
+
+sudo apt-get update
+sudo apt-get install -y python3 python3-venv python3-pip nginx
+
+sudo mkdir -p "$APP_DIR"
+sudo chown -R "$APP_USER:$APP_GROUP" "$APP_DIR"
+
+echo "1. Copia el proyecto a $APP_DIR"
+echo "2. Copia deploy/.env.production.example a $APP_DIR/.env y ajusta credenciales"
+echo "3. Dentro del servidor ejecuta:"
+echo "   cd $APP_DIR"
+echo "   python3 -m venv .venv"
+echo "   .venv/bin/pip install --upgrade pip"
+echo "   .venv/bin/pip install -r requirements.txt"
+echo "4. Copia deploy/simulacro-api.service.example a /etc/systemd/system/simulacro-api.service"
+echo "5. Copia deploy/nginx-simulacro.conf.example a /etc/nginx/sites-available/simulacro-api"
+echo "6. Reemplaza el dominio en el archivo de nginx por $DOMAIN"
+echo "7. Activa los servicios:"
+echo "   sudo ln -sf /etc/nginx/sites-available/simulacro-api /etc/nginx/sites-enabled/simulacro-api"
+echo "   sudo systemctl daemon-reload"
+echo "   sudo systemctl enable simulacro-api"
+echo "   sudo systemctl restart simulacro-api"
+echo "   sudo nginx -t"
+echo "   sudo systemctl restart nginx"
