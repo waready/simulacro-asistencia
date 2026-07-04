@@ -3,46 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>CEPREUNA | Control de Asistencia</title>
+  <title>CEPREUNA | Asistencia</title>
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Sora:wght@400;600;700;800&display=swap");
+    @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap");
 
     :root {
-      --cepre-blue: #1150c5;
-      --cepre-navy: #07275d;
-      --cepre-gold: #f7b718;
-      --cepre-cream: #fff7dc;
-      --cepre-ink: #07111f;
-      --cepre-muted: #5e6b82;
+      --blue-950: #071f49;
+      --blue-900: #0c3278;
+      --blue-700: #1e5ed2;
+      --blue-100: #eaf2ff;
+      --gold-500: #f7b718;
+      --gold-100: #fff5d3;
+      --ink-950: #0b1728;
+      --ink-700: #43506a;
+      --ink-500: #64748b;
       --surface: rgba(255, 255, 255, 0.92);
       --surface-strong: #ffffff;
-      --border-soft: rgba(10, 39, 93, 0.1);
-      --shadow-strong: 0 24px 60px rgba(6, 26, 70, 0.24);
-      --success: #0e9f6e;
-      --success-soft: #e5fff4;
-      --warning: #c98200;
-      --warning-soft: #fff6dd;
-      --danger: #c43636;
-      --danger-soft: #ffe8e8;
+      --line: rgba(12, 50, 120, 0.1);
+      --line-strong: rgba(12, 50, 120, 0.18);
+      --shadow-lg: 0 28px 70px rgba(7, 31, 73, 0.2);
+      --shadow-md: 0 18px 36px rgba(7, 31, 73, 0.14);
+      --success: #0f9c68;
+      --success-soft: #e9fff6;
+      --warning: #c67d00;
+      --warning-soft: #fff4d9;
+      --danger: #cf3a3a;
+      --danger-soft: #ffe9e9;
     }
 
     * {
       box-sizing: border-box;
     }
 
-    html, body {
+    html,
+    body {
       margin: 0;
       min-height: 100%;
-      background:
-        radial-gradient(circle at top left, rgba(247, 183, 24, 0.22), transparent 34%),
-        radial-gradient(circle at top right, rgba(17, 80, 197, 0.25), transparent 40%),
-        linear-gradient(180deg, #eff6ff 0%, #fff8e8 48%, #f8fbff 100%);
-      color: var(--cepre-ink);
+      color: var(--ink-950);
       font-family: "Outfit", "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(247, 183, 24, 0.18), transparent 34%),
+        radial-gradient(circle at top right, rgba(30, 94, 210, 0.18), transparent 32%),
+        linear-gradient(180deg, #f4f8ff 0%, #fff9ec 47%, #f7fbff 100%);
     }
 
     body {
-      position: relative;
       overflow-x: hidden;
     }
 
@@ -50,223 +55,424 @@
     body::after {
       content: "";
       position: fixed;
-      inset: auto;
+      border-radius: 999px;
       pointer-events: none;
       z-index: 0;
-      filter: blur(0.5px);
+      filter: blur(1px);
     }
 
     body::before {
-      top: -4rem;
-      right: -3rem;
-      width: 13rem;
-      height: 13rem;
-      border-radius: 999px;
-      background: linear-gradient(135deg, rgba(17, 80, 197, 0.18), rgba(247, 183, 24, 0.12));
+      width: 18rem;
+      height: 18rem;
+      top: -6rem;
+      left: -4rem;
+      background: linear-gradient(135deg, rgba(30, 94, 210, 0.22), rgba(247, 183, 24, 0.14));
     }
 
     body::after {
-      bottom: 5rem;
-      left: -5rem;
-      width: 14rem;
-      height: 14rem;
-      border-radius: 999px;
-      background: linear-gradient(135deg, rgba(247, 183, 24, 0.15), rgba(17, 80, 197, 0.1));
+      width: 16rem;
+      height: 16rem;
+      right: -5rem;
+      bottom: 3rem;
+      background: linear-gradient(135deg, rgba(247, 183, 24, 0.16), rgba(12, 50, 120, 0.14));
     }
 
-    .page {
+    .shell {
       position: relative;
       z-index: 1;
-      min-height: 100vh;
-      padding: 1rem 1rem 1.6rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+      width: min(100%, 74rem);
+      margin: 0 auto;
+      padding: 0.9rem 0.9rem 1.4rem;
     }
 
     .hero,
     .scan-card,
-    .recent-card,
+    .stack-card,
     .tips-card {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid var(--border-soft);
-      border-radius: 28px;
-      box-shadow: var(--shadow-strong);
       background: var(--surface);
-      backdrop-filter: blur(12px);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(14px);
     }
 
     .hero {
+      position: relative;
+      overflow: hidden;
       padding: 1rem;
-      background:
-        linear-gradient(135deg, rgba(7, 39, 93, 0.95), rgba(17, 80, 197, 0.88)),
-        linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent);
+      border-radius: 2rem;
       color: #fff;
+      background:
+        radial-gradient(circle at 85% 20%, rgba(247, 183, 24, 0.32), transparent 22%),
+        linear-gradient(145deg, rgba(7, 31, 73, 0.98), rgba(15, 62, 145, 0.94));
     }
 
     .hero::after {
       content: "";
       position: absolute;
-      inset: auto -3rem -4rem auto;
-      width: 12rem;
-      height: 12rem;
+      inset: auto -2rem -4rem auto;
+      width: 14rem;
+      height: 14rem;
       border-radius: 999px;
-      background: radial-gradient(circle, rgba(247, 183, 24, 0.4), transparent 62%);
-      opacity: 0.9;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.16), transparent 64%);
+      opacity: 0.75;
     }
 
-    .brand-row {
+    .hero-top {
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .brand-pair {
+      display: grid;
       gap: 0.8rem;
     }
 
-    .brand-mark {
-      width: 100%;
-      max-width: 18rem;
-      color: #ffffff;
+    .brand-card {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      min-width: 0;
+      padding: 0.8rem 0.9rem;
+      border-radius: 1.4rem;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
     }
 
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      margin-top: 1rem;
-      padding: 0.45rem 0.8rem;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.14);
-      font-size: 0.78rem;
+    .brand-card img {
+      display: block;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .brand-card.cepreuna img {
+      width: min(12.5rem, 46vw);
+      height: auto;
+    }
+
+    .brand-card.unap img {
+      width: 3.3rem;
+      height: 3.3rem;
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, 0.96);
+      padding: 0.28rem;
+      box-shadow: 0 10px 22px rgba(7, 31, 73, 0.22);
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .brand-kicker {
+      display: block;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 0.72rem;
       font-weight: 700;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
     }
 
-    .hero-title {
-      margin: 0.9rem 0 0.35rem;
-      font-family: "Sora", "Outfit", sans-serif;
-      font-size: 1.4rem;
-      line-height: 1.1;
+    .brand-title {
+      margin-top: 0.18rem;
+      font-size: 0.98rem;
       font-weight: 800;
+      line-height: 1.15;
     }
 
-    .hero-copy {
-      margin: 0;
-      max-width: 20rem;
-      color: rgba(255, 255, 255, 0.84);
-      font-size: 0.96rem;
-      line-height: 1.45;
-    }
-
-    .scan-card {
-      padding: 1rem;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(255, 251, 240, 0.98));
-    }
-
-    .scan-head {
-      display: flex;
+    .hero-chip {
+      align-self: flex-start;
+      display: inline-flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
-
-    .section-kicker {
-      display: block;
-      margin-bottom: 0.18rem;
-      color: var(--cepre-blue);
+      gap: 0.5rem;
+      padding: 0.55rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       font-size: 0.76rem;
       font-weight: 800;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
-    .section-title {
+    .hero-main {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .hero-title {
       margin: 0;
       font-family: "Sora", "Outfit", sans-serif;
-      font-size: 1.16rem;
+      font-size: clamp(1.8rem, 7vw, 3.5rem);
+      line-height: 0.98;
       font-weight: 800;
+      text-wrap: balance;
+    }
+
+    .hero-copy {
+      margin: 0.7rem 0 0;
+      max-width: 36rem;
+      color: rgba(255, 255, 255, 0.84);
+      font-size: 0.98rem;
+      line-height: 1.55;
+    }
+
+    .hero-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-top: 1rem;
+    }
+
+    .hero-stat {
+      padding: 0.85rem 0.8rem;
+      border-radius: 1.3rem;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .hero-stat span {
+      display: block;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero-stat strong {
+      display: block;
+      margin-top: 0.3rem;
+      font-size: clamp(1.05rem, 3vw, 1.35rem);
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .hero-preview {
+      position: relative;
+      overflow: hidden;
+      padding: 1rem;
+      border-radius: 1.7rem;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .hero-preview::after {
+      content: "";
+      position: absolute;
+      inset: auto -3rem -3rem auto;
+      width: 10rem;
+      height: 10rem;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(247, 183, 24, 0.38), transparent 60%);
+      opacity: 0.9;
+    }
+
+    .preview-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .preview-focus {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: stretch;
+      gap: 0.8rem;
+      margin-top: 0.9rem;
+    }
+
+    .preview-room,
+    .preview-order {
+      border-radius: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    }
+
+    .preview-room {
+      display: grid;
+      place-items: center;
+      min-height: 6.2rem;
+      padding: 0.9rem;
+      background: linear-gradient(140deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: clamp(2.3rem, 10vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.08em;
+      text-transform: uppercase;
+    }
+
+    .preview-order {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 6.3rem;
+      padding: 0.85rem 0.95rem;
+      background: linear-gradient(160deg, rgba(247, 183, 24, 0.22), rgba(255, 255, 255, 0.12));
+      text-align: center;
+    }
+
+    .preview-order span {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .preview-order strong {
+      display: block;
+      margin-top: 0.28rem;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: clamp(2rem, 9vw, 3.2rem);
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .preview-copy {
+      position: relative;
+      z-index: 1;
+      margin: 0.8rem 0 0;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 0.93rem;
+      line-height: 1.45;
+    }
+
+    .layout {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .scan-card,
+    .stack-card,
+    .tips-card {
+      border-radius: 1.9rem;
+    }
+
+    .scan-card {
+      padding: 1rem;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 249, 238, 0.96));
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .kicker {
+      display: block;
+      color: var(--blue-700);
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .card-title {
+      margin: 0.15rem 0 0;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: 1.18rem;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .card-copy {
+      margin: 0.4rem 0 0;
+      color: var(--ink-700);
+      font-size: 0.92rem;
+      line-height: 1.5;
     }
 
     .status-pill {
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
+      gap: 0.5rem;
       flex-shrink: 0;
-      padding: 0.6rem 0.85rem;
+      padding: 0.68rem 0.92rem;
       border-radius: 999px;
-      background: #eef5ff;
-      color: var(--cepre-blue);
-      font-size: 0.78rem;
-      font-weight: 700;
+      background: var(--blue-100);
+      color: var(--blue-700);
+      font-size: 0.79rem;
+      font-weight: 800;
     }
 
     .status-dot {
-      width: 0.65rem;
-      height: 0.65rem;
+      width: 0.68rem;
+      height: 0.68rem;
       border-radius: 999px;
       background: currentColor;
-      box-shadow: 0 0 0 6px rgba(17, 80, 197, 0.12);
-      animation: pulse 1.4s infinite;
+      box-shadow: 0 0 0 6px rgba(30, 94, 210, 0.14);
+      animation: pulse 1.5s infinite;
     }
 
     @keyframes pulse {
       0% { transform: scale(1); opacity: 1; }
-      70% { transform: scale(1.15); opacity: 0.6; }
+      70% { transform: scale(1.18); opacity: 0.56; }
       100% { transform: scale(1); opacity: 1; }
+    }
+
+    .scan-shell {
+      padding: 0.9rem;
+      border-radius: 1.7rem;
+      background: var(--surface-strong);
+      border: 1px solid var(--line);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .scan-shell:focus-within {
+      border-color: rgba(30, 94, 210, 0.38);
+      box-shadow:
+        0 0 0 4px rgba(30, 94, 210, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
     }
 
     .scan-form {
       display: flex;
       flex-direction: column;
-      gap: 0.9rem;
+      gap: 0.95rem;
     }
 
-    .input-shell {
-      position: relative;
+    .scan-headline {
       display: flex;
       align-items: center;
-      gap: 0.7rem;
-      min-height: 4.45rem;
-      padding: 0.75rem 0.85rem 0.75rem 0.95rem;
-      border-radius: 24px;
-      background: var(--surface-strong);
-      border: 1px solid rgba(17, 80, 197, 0.15);
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.75);
-    }
-
-    .input-shell:focus-within {
-      border-color: rgba(17, 80, 197, 0.45);
-      box-shadow:
-        0 0 0 4px rgba(17, 80, 197, 0.12),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+      gap: 0.8rem;
     }
 
     .scan-icon {
-      width: 2.7rem;
-      height: 2.7rem;
-      border-radius: 18px;
+      width: 3.2rem;
+      height: 3.2rem;
+      border-radius: 1.15rem;
       display: grid;
       place-items: center;
-      flex-shrink: 0;
-      background: linear-gradient(135deg, rgba(17, 80, 197, 0.12), rgba(247, 183, 24, 0.18));
-      color: var(--cepre-blue);
+      background: linear-gradient(135deg, rgba(30, 94, 210, 0.14), rgba(247, 183, 24, 0.2));
+      color: var(--blue-700);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
     }
 
     .scan-icon svg {
-      width: 1.3rem;
-      height: 1.3rem;
+      width: 1.45rem;
+      height: 1.45rem;
     }
 
-    .scan-input-wrap {
-      flex: 1;
+    .scan-help {
       min-width: 0;
     }
 
     .scan-label {
       display: block;
-      margin-bottom: 0.18rem;
-      color: var(--cepre-muted);
+      color: var(--ink-500);
       font-size: 0.8rem;
       font-weight: 700;
       letter-spacing: 0.02em;
@@ -274,196 +480,232 @@
 
     .scan-input {
       width: 100%;
+      margin-top: 0.35rem;
       padding: 0;
       border: 0;
       outline: 0;
       background: transparent;
-      color: var(--cepre-ink);
+      color: var(--ink-950);
       font-family: "Sora", "Outfit", sans-serif;
-      font-size: 1.45rem;
+      font-size: clamp(1.65rem, 8vw, 2.55rem);
+      line-height: 1;
       font-weight: 800;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.14em;
     }
 
     .scan-input::placeholder {
-      color: rgba(94, 107, 130, 0.55);
+      color: rgba(100, 116, 139, 0.5);
       letter-spacing: 0.08em;
     }
 
-    .submit-row {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
+    .button-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.75rem;
     }
 
-    .submit-button,
-    .ghost-button,
-    .modal-button {
+    .button,
+    .icon-button,
+    .modal-button,
+    .modal-ghost {
       appearance: none;
       border: 0;
       cursor: pointer;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
       font-family: "Sora", "Outfit", sans-serif;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
     }
 
-    .submit-button {
-      flex: 1;
-      min-height: 3.7rem;
-      border-radius: 22px;
-      background: linear-gradient(135deg, var(--cepre-blue), #06368c);
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 800;
-      box-shadow: 0 16px 34px rgba(17, 80, 197, 0.26);
-    }
-
-    .submit-button:active,
-    .ghost-button:active,
-    .modal-button:active {
+    .button:active,
+    .icon-button:active,
+    .modal-button:active,
+    .modal-ghost:active {
       transform: translateY(1px) scale(0.995);
     }
 
-    .ghost-button {
-      min-width: 3.7rem;
-      min-height: 3.7rem;
-      border-radius: 22px;
-      background: rgba(17, 80, 197, 0.08);
-      color: var(--cepre-blue);
-      font-size: 1.25rem;
+    .button {
+      min-height: 3.85rem;
+      border-radius: 1.35rem;
+      background: linear-gradient(135deg, var(--blue-700), var(--blue-900));
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 800;
+      box-shadow: 0 20px 32px rgba(30, 94, 210, 0.25);
+    }
+
+    .icon-button {
+      min-width: 3.85rem;
+      min-height: 3.85rem;
+      border-radius: 1.35rem;
+      background: rgba(30, 94, 210, 0.08);
+      color: var(--blue-700);
+      font-size: 1.45rem;
       font-weight: 800;
     }
 
-    .helper-grid {
+    .scan-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.75rem;
       margin-top: 1rem;
     }
 
-    .helper-card {
-      padding: 0.85rem 0.9rem;
-      border-radius: 20px;
-      background: rgba(7, 39, 93, 0.04);
-      border: 1px solid rgba(7, 39, 93, 0.06);
+    .mini-card {
+      padding: 0.9rem;
+      border-radius: 1.35rem;
+      border: 1px solid rgba(12, 50, 120, 0.08);
+      background: rgba(12, 50, 120, 0.04);
     }
 
-    .helper-card strong {
+    .mini-card span {
       display: block;
-      font-size: 1rem;
+      color: var(--ink-500);
+      font-size: 0.77rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .mini-card strong {
+      display: block;
+      margin-top: 0.24rem;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: 1.1rem;
       font-weight: 800;
-      color: var(--cepre-navy);
+      line-height: 1.15;
     }
 
-    .helper-card span {
-      display: block;
-      margin-top: 0.18rem;
-      color: var(--cepre-muted);
-      font-size: 0.82rem;
-      line-height: 1.3;
+    .side-column {
+      display: grid;
+      gap: 1rem;
     }
 
-    .recent-card,
+    .stack-card,
     .tips-card {
       padding: 1rem;
     }
 
     .recent-list {
-      list-style: none;
-      margin: 0.95rem 0 0;
-      padding: 0;
       display: flex;
       flex-direction: column;
-      gap: 0.7rem;
-    }
-
-    .recent-item {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
       gap: 0.75rem;
-      align-items: center;
-      padding: 0.78rem 0.85rem;
-      border-radius: 20px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(247, 250, 255, 0.92));
-      border: 1px solid rgba(7, 39, 93, 0.08);
-    }
-
-    .recent-rank {
-      width: 2.45rem;
-      height: 2.45rem;
-      border-radius: 16px;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(135deg, rgba(17, 80, 197, 0.14), rgba(247, 183, 24, 0.22));
-      color: var(--cepre-blue);
-      font-weight: 800;
-    }
-
-    .recent-meta strong {
-      display: block;
-      font-size: 0.98rem;
-      font-weight: 800;
-    }
-
-    .recent-meta span {
-      display: block;
-      margin-top: 0.14rem;
-      color: var(--cepre-muted);
-      font-size: 0.8rem;
-    }
-
-    .recent-room {
-      padding: 0.42rem 0.7rem;
-      border-radius: 999px;
-      background: var(--cepre-cream);
-      color: #9a6200;
-      font-size: 0.8rem;
-      font-weight: 800;
-      white-space: nowrap;
+      margin: 0.95rem 0 0;
+      padding: 0;
+      list-style: none;
     }
 
     .empty-state {
       margin-top: 0.95rem;
       padding: 1rem;
-      border-radius: 22px;
-      background: rgba(7, 39, 93, 0.04);
-      color: var(--cepre-muted);
+      border-radius: 1.4rem;
+      background: rgba(12, 50, 120, 0.04);
+      color: var(--ink-700);
       font-size: 0.92rem;
       line-height: 1.5;
       text-align: center;
     }
 
-    .tips-card {
-      background: linear-gradient(180deg, rgba(255, 247, 220, 0.92), rgba(255, 255, 255, 0.88));
+    .recent-item {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.85rem;
+      padding: 0.9rem;
+      border-radius: 1.45rem;
+      border: 1px solid rgba(12, 50, 120, 0.08);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(245, 249, 255, 0.92));
     }
 
-    .tips-list {
+    .recent-order {
       display: flex;
       flex-direction: column;
-      gap: 0.65rem;
-      margin-top: 0.9rem;
-      color: var(--cepre-muted);
-      font-size: 0.9rem;
+      align-items: center;
+      justify-content: center;
+      min-width: 4.8rem;
+      padding: 0.6rem 0.55rem;
+      border-radius: 1.15rem;
+      background: linear-gradient(160deg, rgba(247, 183, 24, 0.22), rgba(30, 94, 210, 0.12));
+      color: var(--blue-900);
+      font-family: "Sora", "Outfit", sans-serif;
+      text-align: center;
+    }
+
+    .recent-order span {
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .recent-order strong {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 1.4rem;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .recent-body strong {
+      display: block;
+      font-size: 1rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .recent-room {
+      display: inline-flex;
+      align-items: center;
+      margin-top: 0.35rem;
+      padding: 0.38rem 0.68rem;
+      border-radius: 999px;
+      background: var(--gold-100);
+      color: #8a5b00;
+      font-size: 0.8rem;
+      font-weight: 800;
+    }
+
+    .recent-meta {
+      margin-top: 0.4rem;
+      color: var(--ink-700);
+      font-size: 0.84rem;
       line-height: 1.45;
     }
 
-    .tip-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.7rem;
+    .tips-card {
+      background: linear-gradient(180deg, rgba(255, 247, 215, 0.92), rgba(255, 255, 255, 0.96));
     }
 
-    .tip-bullet {
-      width: 1.4rem;
-      height: 1.4rem;
-      flex-shrink: 0;
-      margin-top: 0.12rem;
+    .tips-list {
+      display: grid;
+      gap: 0.75rem;
+      margin-top: 0.9rem;
+    }
+
+    .tip {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.8rem;
+      align-items: flex-start;
+      padding: 0.92rem 0.95rem;
+      border-radius: 1.35rem;
+      border: 1px solid rgba(247, 183, 24, 0.2);
+      background: rgba(255, 255, 255, 0.62);
+    }
+
+    .tip-count {
+      width: 1.65rem;
+      height: 1.65rem;
       display: grid;
       place-items: center;
       border-radius: 999px;
       background: rgba(247, 183, 24, 0.22);
-      color: #9a6200;
-      font-size: 0.8rem;
+      color: #8a5b00;
+      font-size: 0.78rem;
       font-weight: 800;
+    }
+
+    .tip-copy {
+      color: var(--ink-700);
+      font-size: 0.9rem;
+      line-height: 1.5;
     }
 
     .toast {
@@ -475,10 +717,12 @@
       transform: translateY(120%);
       opacity: 0;
       transition: transform 0.26s ease, opacity 0.26s ease;
-      padding: 1rem 1rem 1rem 1.05rem;
-      border-radius: 22px;
+      padding: 1rem 1.05rem;
+      border-radius: 1.35rem;
       border: 1px solid transparent;
-      box-shadow: 0 22px 40px rgba(6, 20, 45, 0.26);
+      box-shadow: 0 24px 42px rgba(7, 31, 73, 0.24);
+      font-size: 0.95rem;
+      font-weight: 700;
     }
 
     .toast.show {
@@ -488,14 +732,14 @@
 
     .toast.error {
       background: var(--danger-soft);
+      border-color: rgba(207, 58, 58, 0.18);
       color: var(--danger);
-      border-color: rgba(196, 54, 54, 0.16);
     }
 
     .toast.info {
-      background: rgba(17, 80, 197, 0.1);
-      color: var(--cepre-blue);
-      border-color: rgba(17, 80, 197, 0.14);
+      background: var(--blue-100);
+      border-color: rgba(30, 94, 210, 0.16);
+      color: var(--blue-700);
     }
 
     .modal-backdrop {
@@ -505,9 +749,9 @@
       display: none;
       align-items: flex-end;
       justify-content: center;
-      padding: 0.9rem;
-      background: rgba(5, 15, 35, 0.56);
-      backdrop-filter: blur(10px);
+      padding: 0.85rem;
+      background: rgba(4, 18, 46, 0.62);
+      backdrop-filter: blur(12px);
     }
 
     .modal-backdrop.open {
@@ -515,16 +759,14 @@
     }
 
     .modal-card {
-      position: relative;
-      width: 100%;
-      max-width: 30rem;
-      border-radius: 34px;
+      width: min(100%, 42rem);
+      border-radius: 2rem;
       overflow: hidden;
-      box-shadow: 0 35px 80px rgba(5, 15, 35, 0.35);
-      transform: translateY(22px) scale(0.98);
+      background: #fff;
+      box-shadow: 0 38px 90px rgba(4, 18, 46, 0.34);
+      transform: translateY(1.2rem) scale(0.98);
       opacity: 0;
       transition: transform 0.24s ease, opacity 0.24s ease;
-      background: #fff;
     }
 
     .modal-backdrop.open .modal-card {
@@ -534,48 +776,63 @@
 
     .modal-card.state-success {
       background:
-        radial-gradient(circle at top right, rgba(14, 159, 110, 0.14), transparent 38%),
-        linear-gradient(180deg, #ffffff, #f7fffb 88%);
+        radial-gradient(circle at top right, rgba(15, 156, 104, 0.16), transparent 34%),
+        linear-gradient(180deg, #ffffff, #f9fffc 88%);
     }
 
     .modal-card.state-warning {
       background:
-        radial-gradient(circle at top right, rgba(201, 130, 0, 0.16), transparent 38%),
-        linear-gradient(180deg, #ffffff, #fffaf0 88%);
-    }
-
-    .modal-watermark {
-      position: absolute;
-      right: -2rem;
-      bottom: -2rem;
-      width: 11rem;
-      opacity: 0.08;
-      color: var(--cepre-blue);
-      pointer-events: none;
+        radial-gradient(circle at top right, rgba(198, 125, 0, 0.18), transparent 34%),
+        linear-gradient(180deg, #ffffff, #fffaf1 88%);
     }
 
     .modal-content {
-      position: relative;
-      z-index: 1;
-      padding: 1.1rem 1.1rem 1.2rem;
+      padding: 1rem 1rem 1.15rem;
     }
 
-    .modal-top {
+    .modal-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 0.7rem;
+      gap: 0.75rem;
+    }
+
+    .modal-brandline {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-width: 0;
+    }
+
+    .modal-brandline img {
+      object-fit: contain;
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .modal-brandline .cepre {
+      width: 6rem;
+      height: auto;
+    }
+
+    .modal-brandline .unap {
+      width: 2.1rem;
+      height: 2.1rem;
+      border-radius: 0.8rem;
+      padding: 0.15rem;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(12, 50, 120, 0.1);
     }
 
     .modal-state {
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
-      padding: 0.56rem 0.82rem;
+      padding: 0.55rem 0.82rem;
       border-radius: 999px;
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       font-weight: 800;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
@@ -592,157 +849,189 @@
     .modal-close {
       appearance: none;
       border: 0;
-      width: 2.8rem;
-      height: 2.8rem;
-      border-radius: 18px;
-      background: rgba(7, 39, 93, 0.06);
-      color: var(--cepre-navy);
-      font-size: 1.25rem;
+      width: 2.85rem;
+      height: 2.85rem;
+      border-radius: 1rem;
+      background: rgba(12, 50, 120, 0.06);
+      color: var(--blue-900);
+      font-size: 1.3rem;
       font-weight: 800;
       cursor: pointer;
     }
 
-    .modal-room {
-      margin: 1rem 0 0.25rem;
-      font-family: "Sora", "Outfit", sans-serif;
-      font-size: clamp(3rem, 18vw, 5rem);
-      line-height: 0.92;
-      letter-spacing: -0.06em;
+    .result-focus {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+
+    .focus-room,
+    .focus-order {
+      border-radius: 1.7rem;
+      padding: 0.95rem;
+      border: 1px solid var(--line);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+
+    .focus-room {
+      background: linear-gradient(160deg, rgba(12, 50, 120, 0.98), rgba(30, 94, 210, 0.92));
+      color: #fff;
+    }
+
+    .focus-order {
+      min-width: 8.2rem;
+      text-align: center;
+      background: linear-gradient(160deg, rgba(247, 183, 24, 0.18), rgba(30, 94, 210, 0.1));
+      color: var(--blue-900);
+    }
+
+    .focus-label {
+      display: block;
+      font-size: 0.75rem;
       font-weight: 800;
-      color: var(--cepre-navy);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      opacity: 0.82;
+    }
+
+    .focus-room strong {
+      display: block;
+      margin-top: 0.35rem;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: clamp(3rem, 14vw, 5.6rem);
+      line-height: 0.9;
+      font-weight: 800;
+      letter-spacing: -0.08em;
+      text-transform: uppercase;
+    }
+
+    .focus-order strong {
+      display: block;
+      margin-top: 0.35rem;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: clamp(2.6rem, 11vw, 4.3rem);
+      line-height: 1;
+      font-weight: 800;
     }
 
     .modal-name {
-      margin: 0.2rem 0 0;
+      margin: 0.95rem 0 0;
       font-family: "Sora", "Outfit", sans-serif;
-      font-size: 1.34rem;
-      line-height: 1.15;
+      font-size: clamp(1.35rem, 4.4vw, 1.9rem);
+      line-height: 1.08;
       font-weight: 800;
       text-wrap: balance;
     }
 
-    .modal-detail-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 0.9rem;
-      align-items: center;
-      margin-top: 1rem;
-    }
-
     .modal-dni {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      flex-wrap: wrap;
-      color: var(--cepre-muted);
-      font-size: 0.95rem;
+      margin-top: 0.35rem;
+      color: var(--ink-700);
+      font-size: 1rem;
       font-weight: 700;
-    }
-
-    .order-badge {
-      min-width: 5.4rem;
-      padding: 0.72rem 0.95rem;
-      border-radius: 24px;
-      text-align: center;
-      background: linear-gradient(135deg, rgba(247, 183, 24, 0.18), rgba(17, 80, 197, 0.12));
-      color: var(--cepre-blue);
-      font-family: "Sora", "Outfit", sans-serif;
-      font-weight: 800;
-    }
-
-    .order-badge strong {
-      display: block;
-      font-size: 1.38rem;
-      line-height: 1;
-    }
-
-    .order-badge span {
-      display: block;
-      margin-top: 0.18rem;
-      font-size: 0.72rem;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
     }
 
     .modal-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 0.75rem;
-      margin-top: 1.05rem;
+      margin-top: 1rem;
     }
 
     .modal-box {
       padding: 0.85rem 0.9rem;
-      border-radius: 22px;
-      background: rgba(7, 39, 93, 0.04);
-      border: 1px solid rgba(7, 39, 93, 0.06);
+      border-radius: 1.35rem;
+      background: rgba(12, 50, 120, 0.04);
+      border: 1px solid rgba(12, 50, 120, 0.08);
     }
 
     .modal-box span {
       display: block;
-      color: var(--cepre-muted);
-      font-size: 0.74rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
+      color: var(--ink-500);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
     .modal-box strong {
       display: block;
-      margin-top: 0.24rem;
+      margin-top: 0.28rem;
       font-size: 1rem;
       font-weight: 800;
+      line-height: 1.28;
     }
 
     .modal-actions {
-      display: flex;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
       gap: 0.75rem;
-      margin-top: 1.1rem;
+      margin-top: 1rem;
     }
 
+    .modal-ghost,
     .modal-button {
-      flex: 1;
-      min-height: 3.4rem;
-      border-radius: 22px;
-      background: linear-gradient(135deg, var(--cepre-blue), #0a3d9f);
-      color: #fff;
+      min-height: 3.55rem;
+      border-radius: 1.25rem;
       font-size: 0.95rem;
       font-weight: 800;
     }
 
-    .ghost-inline {
-      min-height: 3.4rem;
-      min-width: 3.7rem;
-      border-radius: 22px;
-      background: rgba(7, 39, 93, 0.06);
-      color: var(--cepre-navy);
-      font-size: 0.92rem;
-      font-weight: 800;
+    .modal-ghost {
+      min-width: 5.1rem;
+      background: rgba(12, 50, 120, 0.06);
+      color: var(--blue-900);
     }
 
-    @media (min-width: 860px) {
-      .page {
-        max-width: 70rem;
-        margin: 0 auto;
-        padding: 1.2rem;
+    .modal-button {
+      background: linear-gradient(135deg, var(--blue-700), var(--blue-900));
+      color: #fff;
+      box-shadow: 0 20px 32px rgba(30, 94, 210, 0.22);
+    }
+
+    @media (max-width: 28rem) {
+      .hero-strip,
+      .scan-grid,
+      .modal-grid {
+        grid-template-columns: 1fr;
       }
 
-      .desktop-grid {
-        display: grid;
-        grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
-        gap: 1rem;
+      .preview-focus,
+      .result-focus,
+      .modal-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-order,
+      .focus-order {
+        min-width: 0;
+      }
+
+      .focus-order {
+        text-align: left;
+      }
+    }
+
+    @media (min-width: 42rem) {
+      .shell {
+        padding: 1rem 1rem 1.6rem;
       }
 
       .hero {
-        padding: 1.2rem 1.25rem;
+        padding: 1.2rem;
       }
 
-      .hero-title {
-        font-size: 1.85rem;
+      .brand-pair {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      }
+
+      .hero-main {
+        grid-template-columns: minmax(0, 1.12fr) minmax(19rem, 0.88fr);
+        align-items: end;
       }
 
       .scan-card,
-      .recent-card,
+      .stack-card,
       .tips-card {
         padding: 1.1rem;
       }
@@ -751,106 +1040,181 @@
         align-items: center;
       }
     }
+
+    @media (min-width: 61rem) {
+      .layout {
+        grid-template-columns: minmax(0, 1.08fr) minmax(20rem, 0.92fr);
+      }
+
+      .scan-card {
+        padding: 1.2rem;
+      }
+
+      .stack-card,
+      .tips-card {
+        padding: 1.15rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <main class="page">
+  <main class="shell">
     <section class="hero">
-      <div class="brand-row">
-        <svg class="brand-mark" viewBox="0 0 1020 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="CEPREUNA">
-          <path d="M377 200C379.16 200 381 198.209 381 196V103C381 103 386 112 395 127L434 194C435.785 197.74 439.744 200 443 200H470V50H443C441.202 50 439 51.4941 439 54V148L421 116L385 55C383.248 51.8912 379.479 50 376 50H350V200H377Z" fill="currentColor"/>
-          <path d="M726 92H739C742.314 92 745 89.3137 745 86V60H773V92H800V116H773V159C773 169.5 778.057 174 787 174H800V200H783C759.948 200 745 185.071 745 160V116H726V92Z" fill="currentColor"/>
-          <path d="M591 92V154C591 168.004 585.742 179.809 578 188C570.258 196.191 559.566 200 545 200C530.434 200 518.742 196.191 511 188C503.389 179.809 498 168.004 498 154V92H514C517.412 92 520.769 92.622 523 95C525.231 97.2459 526 98.5652 526 102V154C526 162.059 526.457 167.037 530 171C533.543 174.831 537.914 176 545 176C552.217 176 555.457 174.831 559 171C562.543 167.037 563 162.059 563 154V102C563 98.5652 563.769 96.378 566 94C567.96 91.9107 570.028 91.9599 573 92C573.411 92.0055 574.586 92 575 92H591Z" fill="currentColor"/>
-          <path d="M676 144L710 92H684C680.723 92 677.812 93.1758 676 96L660 120L645 97C643.188 94.1758 639.277 92 636 92H611L645 143L608 200H634C637.25 200 640.182 196.787 642 194L660 167L679 195C680.818 197.787 683.75 200 687 200H713L676 144Z" fill="currentColor"/>
-          <path d="M168 200H279C282.542 200 285.932 198.756 289 197C292.068 195.244 295.23 193.041 297 190C298.77 186.959 300.002 183.51 300 179.999C299.998 176.488 298.773 173.04 297 170.001L222 41C220.23 37.96 218.067 35.7552 215 34C211.933 32.2448 207.542 31 204 31C200.458 31 197.067 32.2448 194 34C190.933 35.7552 188.77 37.96 187 41L168 74L130 9.99764C128.228 6.95784 126.068 3.75491 123 2C119.932 0.245087 116.542 0 113 0C109.458 0 106.068 0.245087 103 2C99.9323 3.75491 96.7717 6.95784 95 9.99764L2 170.001C0.226979 173.04 0.00154312 176.488 1.90993e-06 179.999C-0.0015393 183.51 0.229648 186.959 2 190C3.77035 193.04 6.93245 195.244 10 197C13.0675 198.756 16.4578 200 20 200H90C117.737 200 137.925 187.558 152 164L186 105L204 74L259 168H186L168 200ZM89 168H40L113 42L150 105L125.491 147.725C116.144 163.01 105.488 168 89 168Z" fill="#f7b718"/>
-          <path d="M958 60.0001H938C933.524 60.0001 929.926 59.9395 927 63C924.074 65.8905 925 67.5792 925 72V141C925 151.372 923.648 156.899 919 162C914.352 166.931 908.468 169 899 169C889.705 169 882.648 166.931 878 162C873.352 156.899 873 151.372 873 141V72.0001C873 67.5793 872.926 65.8906 870 63.0001C867.074 59.9396 863.476 60.0001 859 60.0001H840V141C840 159.023 845.016 173.458 855 184C865.156 194.542 879.893 200 899 200C918.107 200 932.844 194.542 943 184C953.156 173.458 958 159.023 958 141V60.0001Z" fill="#f7b718"/>
-          <path fill-rule="evenodd" clip-rule="evenodd" d="M1000 60.0233L1020 60V77L1020 128V156.007L1020 181L1020 189.004C1020 192.938 1019.98 194.429 1017 197.001C1014.02 199.725 1009.56 200 1005 200H986.001V181.006L986 130.012V70.0215C986 66.1576 986.016 64.5494 989 62.023C991.819 59.6358 995.437 60.0233 1000 60.0233Z" fill="#f7b718"/>
-        </svg>
+      <div class="hero-top">
+        <div class="brand-pair">
+          <article class="brand-card cepreuna">
+            <img src="/static/cepreuna-logo.png" alt="Logo CEPREUNA">
+            <div class="brand-copy">
+              <span class="brand-kicker">Centro Preuniversitario</span>
+              <div class="brand-title">CEPREUNA</div>
+            </div>
+          </article>
+
+          <article class="brand-card unap">
+            <img src="/static/unap-shield.png" alt="Escudo UNAP">
+            <div class="brand-copy">
+              <span class="brand-kicker">Institucion</span>
+              <div class="brand-title">Universidad Nacional del Altiplano</div>
+            </div>
+          </article>
+        </div>
+
+        <div class="hero-chip">Panel oficial de asistencia</div>
       </div>
-      <div class="hero-badge">
-        <span>Panel móvil</span>
+
+      <div class="hero-main">
+        <div>
+          <h1 class="hero-title">Escaneo por DNI con aula y orden visibles al instante.</h1>
+          <p class="hero-copy">
+            Diseno pensado para movil, tablet y laptop pequena. Apenas se registra un alumno, el sistema
+            resalta primero el aula y el numero de orden para acelerar el llamado en puerta.
+          </p>
+
+          <div class="hero-strip">
+            <article class="hero-stat">
+              <span>Prioridad</span>
+              <strong>Aula grande</strong>
+            </article>
+            <article class="hero-stat">
+              <span>Flujo</span>
+              <strong>Foco siempre activo</strong>
+            </article>
+            <article class="hero-stat">
+              <span>Operacion</span>
+              <strong>Un toque o lector</strong>
+            </article>
+          </div>
+        </div>
+
+        <aside class="hero-preview" aria-hidden="true">
+          <div class="preview-label">Vista de confirmacion</div>
+          <div class="preview-focus">
+            <div class="preview-room">B-301</div>
+            <div class="preview-order">
+              <span>N de orden</span>
+              <strong>01</strong>
+            </div>
+          </div>
+          <p class="preview-copy">
+            El aula domina la pantalla y el orden queda al costado para ubicar al estudiante sin perder tiempo.
+          </p>
+        </aside>
       </div>
-      <h1 class="hero-title">Control de asistencia para escaneo rápido</h1>
-      <p class="hero-copy">Enfocado para celular, lectura ágil por DNI y confirmación visual inmediata con salón, orden y estado del estudiante.</p>
     </section>
 
-    <div class="desktop-grid">
+    <section class="layout">
       <section class="scan-card">
-        <div class="scan-head">
+        <div class="card-top">
           <div>
-            <span class="section-kicker">Escaneo activo</span>
-            <h2 class="section-title">Registrar asistencia</h2>
+            <span class="kicker">Escaneo activo</span>
+            <h2 class="card-title">Registrar asistencia</h2>
+            <p class="card-copy">
+              Escanea o escribe el DNI. El campo recupera el foco automaticamente despues de cada lectura.
+            </p>
           </div>
-          <div class="status-pill" id="status-pill">
+
+          <div class="status-pill">
             <span class="status-dot"></span>
             <span id="status-text">Listo para escanear</span>
           </div>
         </div>
 
-        <form class="scan-form" id="scan-form" autocomplete="off">
-          <div class="input-shell">
-            <div class="scan-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none">
-                <path d="M4 7V5a1 1 0 0 1 1-1h2M20 7V5a1 1 0 0 0-1-1h-2M4 17v2a1 1 0 0 0 1 1h2M20 17v2a1 1 0 0 1-1 1h-2M7 12h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-            </div>
-            <div class="scan-input-wrap">
-              <label class="scan-label" for="dni-input">DNI del estudiante</label>
-              <input
-                id="dni-input"
-                class="scan-input"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                maxlength="16"
-                placeholder="Escanea o escribe el DNI"
-                autofocus
-              >
-            </div>
-          </div>
+        <div class="scan-shell">
+          <form class="scan-form" id="scan-form" autocomplete="off">
+            <div class="scan-headline">
+              <div class="scan-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M4 7V5a1 1 0 0 1 1-1h2M20 7V5a1 1 0 0 0-1-1h-2M4 17v2a1 1 0 0 0 1 1h2M20 17v2a1 1 0 0 1-1 1h-2M7 12h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
 
-          <div class="submit-row">
-            <button class="submit-button" id="submit-button" type="submit">Marcar asistencia</button>
-            <button class="ghost-button" id="clear-button" type="button" aria-label="Limpiar">×</button>
-          </div>
-        </form>
+              <div class="scan-help">
+                <label class="scan-label" for="dni-input">DNI del estudiante</label>
+                <input
+                  id="dni-input"
+                  class="scan-input"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  maxlength="16"
+                  placeholder="ESCANEA EL DNI"
+                  autofocus
+                >
+              </div>
+            </div>
 
-        <div class="helper-grid">
-          <article class="helper-card">
+            <div class="button-row">
+              <button class="button" id="submit-button" type="submit">Marcar asistencia</button>
+              <button class="icon-button" id="clear-button" type="button" aria-label="Limpiar campo">x</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="scan-grid">
+          <article class="mini-card">
+            <span>Registros de esta sesion</span>
             <strong id="recent-count">0</strong>
-            <span>Registros mostrados en esta sesión</span>
           </article>
-          <article class="helper-card">
+          <article class="mini-card">
+            <span>Ultimo estado</span>
             <strong id="last-status">Esperando</strong>
-            <span>Último resultado del escaneo</span>
           </article>
         </div>
       </section>
 
-      <section class="recent-card">
-        <span class="section-kicker">Seguimiento</span>
-        <h2 class="section-title">Últimos llamados</h2>
-        <div class="empty-state" id="empty-state">Todavía no hay asistencias recientes en esta sesión. Apenas registres una, aparecerá aquí con su salón y número de orden.</div>
-        <ul class="recent-list" id="recent-list" hidden></ul>
-      </section>
-    </div>
+      <section class="side-column">
+        <article class="stack-card">
+          <span class="kicker">Seguimiento</span>
+          <h2 class="card-title">Ultimos llamados</h2>
+          <p class="card-copy">Cada registro nuevo aparece arriba con salon y numero de orden bien visibles.</p>
 
-    <section class="tips-card">
-      <span class="section-kicker">Operación rápida</span>
-      <h2 class="section-title">Listo para lector o digitación manual</h2>
-      <div class="tips-list">
-        <div class="tip-row">
-          <div class="tip-bullet">1</div>
-          <div>El cursor vuelve al campo automáticamente después de cada registro para seguir escaneando sin tocar pantalla.</div>
-        </div>
-        <div class="tip-row">
-          <div class="tip-bullet">2</div>
-          <div>Cuando el DNI existe, se marca asistencia en una sola llamada y se abre un modal grande con salón, nombre, sede, área y número de orden.</div>
-        </div>
-        <div class="tip-row">
-          <div class="tip-bullet">3</div>
-          <div>Si el alumno ya fue marcado, el panel avisa claramente para evitar duplicados y aun así muestra su información clave.</div>
-        </div>
-      </div>
+          <div class="empty-state" id="empty-state">
+            Todavia no hay asistencias recientes en esta sesion. Apenas registres una lectura,
+            apareceran aqui el salon, el alumno y su numero de orden.
+          </div>
+
+          <ul class="recent-list" id="recent-list" hidden></ul>
+        </article>
+
+        <article class="tips-card">
+          <span class="kicker">Operacion rapida</span>
+          <h2 class="card-title">Hecho para fila y puerta</h2>
+
+          <div class="tips-list">
+            <div class="tip">
+              <div class="tip-count">1</div>
+              <div class="tip-copy">La pantalla principal y el modal ponen el salon y el orden primero, antes que el resto de datos.</div>
+            </div>
+            <div class="tip">
+              <div class="tip-count">2</div>
+              <div class="tip-copy">Si un DNI ya fue marcado, el panel lo indica sin cortar el flujo de trabajo.</div>
+            </div>
+            <div class="tip">
+              <div class="tip-count">3</div>
+              <div class="tip-copy">Funciona bien en celular, tablet y laptop pequena con tarjetas grandes y contraste alto.</div>
+            </div>
+          </div>
+        </article>
+      </section>
     </section>
   </main>
 
@@ -858,35 +1222,37 @@
 
   <div class="modal-backdrop" id="result-modal" aria-hidden="true">
     <div class="modal-card state-success" id="modal-card">
-      <svg class="modal-watermark" viewBox="0 0 300 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M168 200H279C282.542 200 285.932 198.756 289 197C292.068 195.244 295.23 193.041 297 190C298.77 186.959 300.002 183.51 300 179.999C299.998 176.488 298.773 173.04 297 170.001L222 41C220.23 37.96 218.067 35.7552 215 34C211.933 32.2448 207.542 31 204 31C200.458 31 197.067 32.2448 194 34C190.933 35.7552 188.77 37.96 187 41L168 74L130 9.99764C128.228 6.95784 126.068 3.75491 123 2C119.932 0.245087 116.542 0 113 0C109.458 0 106.068 0.245087 103 2C99.9323 3.75491 96.7717 6.95784 95 9.99764L2 170.001C0.226979 173.04 0.00154312 176.488 1.90993e-06 179.999C-0.0015393 183.51 0.229648 186.959 2 190C3.77035 193.04 6.93245 195.244 10 197C13.0675 198.756 16.4578 200 20 200H90C117.737 200 137.925 187.558 152 164L186 105L204 74L259 168H186L168 200ZM89 168H40L113 42L150 105L125.491 147.725C116.144 163.01 105.488 168 89 168Z" fill="currentColor"/>
-      </svg>
       <div class="modal-content">
-        <div class="modal-top">
-          <div class="modal-state success" id="modal-state">
-            <span id="modal-state-text">Asistencia registrada</span>
+        <div class="modal-head">
+          <div class="modal-brandline">
+            <img class="cepre" src="/static/cepreuna-logo.png" alt="Logo CEPREUNA">
+            <img class="unap" src="/static/unap-shield.png" alt="Escudo UNAP">
+            <div class="modal-state success" id="modal-state">
+              <span id="modal-state-text">Asistencia registrada</span>
+            </div>
           </div>
-          <button class="modal-close" id="modal-close" type="button" aria-label="Cerrar">×</button>
+
+          <button class="modal-close" id="modal-close" type="button" aria-label="Cerrar modal">x</button>
         </div>
 
-        <div class="modal-room" id="modal-room">B-301</div>
-        <h3 class="modal-name" id="modal-name">Nombre del estudiante</h3>
-
-        <div class="modal-detail-row">
-          <div class="modal-dni">
-            <strong>DNI:</strong>
-            <span id="modal-dni">00000000</span>
+        <div class="result-focus">
+          <div class="focus-room">
+            <span class="focus-label">Aula</span>
+            <strong id="modal-room">B-301</strong>
           </div>
-          <div class="order-badge">
+          <div class="focus-order">
+            <span class="focus-label">N de orden</span>
             <strong id="modal-order">1</strong>
-            <span>N° orden</span>
           </div>
         </div>
+
+        <h3 class="modal-name" id="modal-name">Nombre del estudiante</h3>
+        <div class="modal-dni">DNI: <span id="modal-dni">00000000</span></div>
 
         <div class="modal-grid">
           <article class="modal-box">
-            <span>Área</span>
-            <strong id="modal-area">BIOMÉDICAS</strong>
+            <span>Area</span>
+            <strong id="modal-area">BIOMEDICAS</strong>
           </article>
           <article class="modal-box">
             <span>Sede</span>
@@ -903,7 +1269,7 @@
         </div>
 
         <div class="modal-actions">
-          <button class="ghost-inline ghost-button" id="modal-scan-another" type="button">Seguir</button>
+          <button class="modal-ghost" id="modal-scan-another" type="button">Seguir</button>
           <button class="modal-button" id="modal-confirm" type="button">Listo</button>
         </div>
       </div>
@@ -953,7 +1319,9 @@
     function queueFocus(delay = 60) {
       window.clearTimeout(window.__focusTimer);
       window.__focusTimer = window.setTimeout(() => {
-        if (document.hidden) return;
+        if (document.hidden) {
+          return;
+        }
         input.focus({ preventScroll: true });
         input.setSelectionRange(input.value.length, input.value.length);
       }, delay);
@@ -989,12 +1357,15 @@
       recentList.hidden = false;
       recentList.innerHTML = recentEntries.map((entry) => `
         <li class="recent-item">
-          <div class="recent-rank">#${entry.numero_orden}</div>
-          <div class="recent-meta">
-            <strong>${entry.nombre}</strong>
-            <span>${entry.dni} · ${entry.area}</span>
+          <div class="recent-order">
+            <span>Orden</span>
+            <strong>${entry.numero_orden}</strong>
           </div>
-          <div class="recent-room">${entry.salon}</div>
+          <div class="recent-body">
+            <strong>${entry.nombre}</strong>
+            <div class="recent-room">Aula ${entry.salon}</div>
+            <div class="recent-meta">${entry.dni} | ${entry.area} | ${entry.sede}</div>
+          </div>
         </li>
       `).join("");
     }
@@ -1034,15 +1405,15 @@
 
       modalTimer = window.setTimeout(() => {
         closeModal();
-      }, 4600);
+      }, 4700);
     }
 
     async function registerAttendance(dni) {
       submitButton.disabled = true;
-      setStatus("Buscando estudiante...");
+      setStatus("Buscando estudiante");
 
       try {
-        const response = await fetch("/panel/api/asistencia", {
+        const response = await fetch("/api/panel/asistencia", {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -1076,7 +1447,7 @@
       const dni = sanitizeDni(input.value);
 
       if (dni.length < 8) {
-        showToast("Ingresa o escanea un DNI válido.", "error");
+        showToast("Ingresa o escanea un DNI valido.", "error");
         queueFocus();
         return;
       }
@@ -1115,7 +1486,7 @@
 
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) {
-        queueFocus(80);
+        queueFocus(90);
       }
     });
 

@@ -5,7 +5,8 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.config import Settings, get_settings
 from app.repository import DuplicateStudentError, Repository, create_repository
@@ -24,6 +25,7 @@ from app.schemas import (
 
 settings = get_settings()
 PANEL_HTML_PATH = Path(__file__).resolve().parent / "panel.html"
+STATIC_DIR_PATH = Path(__file__).resolve().parent / "static"
 
 
 def validate_api_key(
@@ -64,19 +66,27 @@ if settings.cors_origins:
         allow_headers=list(settings.cors_headers),
     )
 
+app.mount("/static", StaticFiles(directory=STATIC_DIR_PATH), name="static")
+
 
 def get_repository(request: Request) -> Repository:
     return request.app.state.repository
 
 
-@app.get("/panel", include_in_schema=False)
-def panel_asistencia() -> FileResponse:
+@app.get("/", include_in_schema=False)
+def panel_inicio() -> FileResponse:
     return FileResponse(
         PANEL_HTML_PATH,
         headers={"Cache-Control": "no-store, max-age=0"},
     )
 
 
+@app.get("/panel", include_in_schema=False)
+def panel_redirect() -> RedirectResponse:
+    return RedirectResponse(url="/", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+
+
+@app.post("/api/panel/asistencia", response_model=PanelAttendanceResponse, include_in_schema=False)
 @app.post("/panel/api/asistencia", response_model=PanelAttendanceResponse, include_in_schema=False)
 def panel_marcar_asistencia(
     payload: PanelAttendanceRequest,
@@ -104,12 +114,13 @@ def panel_marcar_asistencia(
     )
 
 
-@app.get("/", dependencies=[Depends(validate_api_key)])
-def root() -> dict[str, str]:
+@app.get("/api", dependencies=[Depends(validate_api_key)])
+def api_root() -> dict[str, str]:
     return {
         "message": "Simulacro API activa.",
         "docs": "/docs",
         "health": "/health",
+        "panel": "/",
         "resumen": "/api/v1/resumen",
         "storage": settings.storage_backend,
     }

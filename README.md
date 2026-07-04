@@ -77,8 +77,9 @@ python -m app.importer --excel "C:\ruta\archivo.xlsx" --out ".\data\simulacro_da
 ## Endpoints principales
 
 - `GET /health`
+- `GET /`
 - `GET /panel`
-- `POST /panel/api/asistencia`
+- `POST /api/panel/asistencia`
 - `GET /api/v1/resumen`
 - `GET /api/v1/alumnos/{dni}`
 - `GET /api/v1/alumnos?dni=60681300`
@@ -89,7 +90,7 @@ python -m app.importer --excel "C:\ruta\archivo.xlsx" --out ".\data\simulacro_da
 - `PATCH /api/v1/alumnos/{dni}/asistencia`
 - `DELETE /api/v1/alumnos/{dni}`
 
-`/panel` sirve un panel HTML mobile-first para toma de asistencia. Ese panel consume `POST /panel/api/asistencia` en una sola llamada para buscar por DNI, marcar `asistencia=true` y devolver los datos del alumno para el modal de confirmacion.
+`/` sirve el panel HTML mobile-first para toma de asistencia. `/panel` redirige al inicio y el panel consume `POST /api/panel/asistencia` en una sola llamada para buscar por DNI, marcar `asistencia=true` y devolver los datos del alumno para el modal de confirmacion.
 
 Si defines `SIMULACRO_API_KEY`, envia el header:
 
