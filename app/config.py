@@ -39,6 +39,9 @@ class Settings:
     db_results_table: str
     db_auto_seed: bool
     mysql_cache_ttl_seconds: int
+    public_results_cache_seconds: int
+    public_portal_cache_seconds: int
+    static_cache_seconds: int
     cors_origins: tuple[str, ...]
     cors_methods: tuple[str, ...]
     cors_headers: tuple[str, ...]
@@ -107,6 +110,9 @@ def get_settings() -> Settings:
         db_results_table=os.getenv("SIMULACRO_DB_RESULTS_TABLE", "simulacro_resultados"),
         db_auto_seed=_to_bool(os.getenv("SIMULACRO_DB_AUTO_SEED"), default=False),
         mysql_cache_ttl_seconds=int(os.getenv("SIMULACRO_MYSQL_CACHE_TTL_SECONDS", "60")),
+        public_results_cache_seconds=int(os.getenv("SIMULACRO_PUBLIC_RESULTS_CACHE_SECONDS", "120")),
+        public_portal_cache_seconds=int(os.getenv("SIMULACRO_PUBLIC_PORTAL_CACHE_SECONDS", "300")),
+        static_cache_seconds=int(os.getenv("SIMULACRO_STATIC_CACHE_SECONDS", "86400")),
         cors_origins=_to_csv(os.getenv("SIMULACRO_CORS_ORIGINS"), default=()),
         cors_methods=_to_csv(os.getenv("SIMULACRO_CORS_METHODS"), default=("GET", "POST", "PUT", "DELETE", "OPTIONS")),
         cors_headers=_to_csv(os.getenv("SIMULACRO_CORS_HEADERS"), default=("Authorization", "Content-Type", "X-API-Key")),

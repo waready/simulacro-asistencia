@@ -7,7 +7,8 @@ User=www-data
 Group=www-data
 WorkingDirectory=/opt/simulacro-api
 EnvironmentFile=/opt/simulacro-api/.env
-ExecStart=/opt/simulacro-api/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1
+LimitNOFILE=8192
+ExecStart=/opt/simulacro-api/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --timeout-keep-alive 5 --backlog 2048
 Restart=always
 RestartSec=3
 

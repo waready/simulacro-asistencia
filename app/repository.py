@@ -252,6 +252,8 @@ class JsonStudentRepository:
         self._results_by_dni: dict[str, dict[str, Any]] = {}
         self._indexed_results: list[IndexedResult] = []
         self._results_summary: dict[str, Any] | None = None
+        self._serialized_results_by_dni: dict[str, dict[str, Any]] = {}
+        self._public_results_by_dni: dict[str, dict[str, Any]] = {}
 
     def load(self) -> None:
         self._ensure_dataset_file()
@@ -287,12 +289,12 @@ class JsonStudentRepository:
         return None if student is None else dict(student)
 
     def get_result_by_dni(self, dni: str) -> dict[str, Any] | None:
-        result = self._results_by_dni.get(dni)
-        return None if result is None else serialize_result(result, self._students_by_dni)
+        payload = self._serialized_results_by_dni.get(dni)
+        return None if payload is None else dict(payload)
 
     def get_public_result_by_dni(self, dni: str) -> dict[str, Any] | None:
-        result = self._results_by_dni.get(dni)
-        return None if result is None else serialize_public_result(result, self._students_by_dni)
+        payload = self._public_results_by_dni.get(dni)
+        return None if payload is None else dict(payload)
 
     def search_students(
         self,
@@ -465,6 +467,12 @@ class JsonStudentRepository:
         self._results_by_dni = {result["dni"]: result for result in self._results}
         self._indexed_results = [build_indexed_result(result) for result in self._results]
         self._results_summary = build_results_summary(self._results)
+        self._serialized_results_by_dni = {
+            result["dni"]: serialize_result(result, self._students_by_dni) for result in self._results
+        }
+        self._public_results_by_dni = {
+            result["dni"]: serialize_public_result(result, self._students_by_dni) for result in self._results
+        }
 
     def _event_payload(self) -> dict[str, Any]:
         if self.dataset is None:
@@ -499,6 +507,8 @@ class MySQLStudentRepository:
         self._indexed_results: list[IndexedResult] = []
         self._summary: dict[str, Any] | None = None
         self._results_summary: dict[str, Any] | None = None
+        self._serialized_results_by_dni: dict[str, dict[str, Any]] = {}
+        self._public_results_by_dni: dict[str, dict[str, Any]] = {}
         self._event: dict[str, Any] = {
             "institucion": "",
             "organizador": "",
@@ -570,13 +580,13 @@ class MySQLStudentRepository:
 
     def get_result_by_dni(self, dni: str) -> dict[str, Any] | None:
         self._ensure_snapshot()
-        result = self._results_by_dni.get(dni)
-        return None if result is None else serialize_result(result, self._students_by_dni)
+        payload = self._serialized_results_by_dni.get(dni)
+        return None if payload is None else dict(payload)
 
     def get_public_result_by_dni(self, dni: str) -> dict[str, Any] | None:
         self._ensure_snapshot()
-        result = self._results_by_dni.get(dni)
-        return None if result is None else serialize_public_result(result, self._students_by_dni)
+        payload = self._public_results_by_dni.get(dni)
+        return None if payload is None else dict(payload)
 
     def search_students(
         self,
@@ -913,6 +923,12 @@ class MySQLStudentRepository:
             self._results_by_dni = {result["dni"]: result for result in results}
             self._indexed_results = [build_indexed_result(result) for result in results]
             self._results_summary = build_results_summary(results)
+            self._serialized_results_by_dni = {
+                result["dni"]: serialize_result(result, self._students_by_dni) for result in results
+            }
+            self._public_results_by_dni = {
+                result["dni"]: serialize_public_result(result, self._students_by_dni) for result in results
+            }
             self._event = {
                 "institucion": event_row.get("institucion", ""),
                 "organizador": event_row.get("organizador", ""),

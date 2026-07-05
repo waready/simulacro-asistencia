@@ -4,8 +4,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import Settings, get_settings
@@ -31,6 +32,18 @@ settings = get_settings()
 PANEL_HTML_PATH = Path(__file__).resolve().parent / "panel.html"
 RESULTS_HTML_PATH = Path(__file__).resolve().parent / "resultados.html"
 STATIC_DIR_PATH = Path(__file__).resolve().parent / "static"
+
+
+class CacheControlStaticFiles(StaticFiles):
+    def __init__(self, *args, cache_control: str, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.cache_control = cache_control
+
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        if response.status_code == status.HTTP_200_OK:
+            response.headers.setdefault("Cache-Control", self.cache_control)
+        return response
 
 
 def validate_api_key(
@@ -71,7 +84,16 @@ if settings.cors_origins:
         allow_headers=list(settings.cors_headers),
     )
 
-app.mount("/static", StaticFiles(directory=STATIC_DIR_PATH), name="static")
+app.add_middleware(GZipMiddleware, minimum_size=1024)
+
+app.mount(
+    "/static",
+    CacheControlStaticFiles(
+        directory=STATIC_DIR_PATH,
+        cache_control=f"public, max-age={max(0, settings.static_cache_seconds)}, immutable",
+    ),
+    name="static",
+)
 
 
 def get_repository(request: Request) -> Repository:
@@ -83,7 +105,7 @@ def get_repository(request: Request) -> Repository:
 def portal_resultados() -> FileResponse:
     return FileResponse(
         RESULTS_HTML_PATH,
-        headers={"Cache-Control": "no-store, max-age=0"},
+        headers={"Cache-Control": f"public, max-age={max(0, settings.public_portal_cache_seconds)}"},
     )
 
 
@@ -167,11 +189,22 @@ def resumen_resultados(repository: Repository = Depends(get_repository)) -> Resu
     "/api/public/resultados/{dni}",
     response_model=ResultadoConsultaResponse,
 )
-def resultado_publico_por_dni(dni: str, repository: Repository = Depends(get_repository)) -> ResultadoConsultaResponse:
+def resultado_publico_por_dni(
+    dni: str,
+    repository: Repository = Depends(get_repository),
+) -> ResultadoConsultaResponse:
     result = repository.get_public_result_by_dni(dni)
     if result is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resultado no encontrado.")
-    return ResultadoConsultaResponse.model_validate(result)
+    return JSONResponse(
+        content=result,
+        headers={
+            "Cache-Control": (
+                f"public, max-age={max(0, settings.public_results_cache_seconds)}, "
+                "stale-while-revalidate=60, stale-if-error=600"
+            )
+        },
+    )
 
 
 @app.get(

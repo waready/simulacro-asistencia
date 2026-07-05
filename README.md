@@ -37,6 +37,9 @@ Usa `.env.example` como referencia:
 - `SIMULACRO_DB_STUDENTS_TABLE`, `SIMULACRO_DB_EVENT_TABLE`, `SIMULACRO_DB_RESULTS_TABLE`: nombres de tablas.
 - `SIMULACRO_DB_AUTO_SEED`: si es `true`, la API llena MySQL automaticamente cuando la tabla este vacia y exista el Excel.
 - `SIMULACRO_MYSQL_CACHE_TTL_SECONDS`: segundos que dura el snapshot en memoria cuando usas MySQL.
+- `SIMULACRO_PUBLIC_RESULTS_CACHE_SECONDS`: segundos de cache para la consulta publica por DNI.
+- `SIMULACRO_PUBLIC_PORTAL_CACHE_SECONDS`: segundos de cache para la portada de resultados.
+- `SIMULACRO_STATIC_CACHE_SECONDS`: segundos de cache para logos y archivos estaticos.
 - `SIMULACRO_CORS_ORIGINS`: origins permitidos por CORS, separados por coma.
 - `SIMULACRO_CORS_METHODS`, `SIMULACRO_CORS_HEADERS`, `SIMULACRO_CORS_ALLOW_CREDENTIALS`: politica CORS.
 
@@ -105,6 +108,16 @@ python -m app.importer --excel "C:\ruta\alumnos.xlsx" --results-excel "C:\ruta\p
 `/panel` y `/asistencia` sirven el panel HTML mobile-first para toma de asistencia. El panel consume `POST /api/panel/asistencia` en una sola llamada para buscar por DNI, marcar `asistencia=true` y devolver los datos del alumno para el modal de confirmacion.
 
 La consulta por resultados usa `GET /api/public/resultados/{dni}` y muestra el puntaje junto con una observacion clara cuando el caso sea `0.00`, `sin_lectura`, `puntaje_vacio` o `aula_vacia`.
+
+## Ajustes de rendimiento
+
+Para aguantar mejor picos de consultas en un servidor basico:
+
+- El portal publico de resultados (`/`) ahora se sirve con cache corto para bajar recargas repetidas.
+- `GET /api/public/resultados/{dni}` responde desde un diccionario en memoria ya prearmado, sin reconstruir el payload en cada consulta.
+- Los logos y archivos estaticos salen con cache largo.
+- La app comprime respuestas medianas con `gzip`.
+- El ejemplo de `systemd` usa `--timeout-keep-alive 5` y `--backlog 2048` para liberar conexiones antes en un droplet chico.
 
 ## API de resultados
 
@@ -200,6 +213,7 @@ Recomendacion practica:
 - Si esperas picos cuando publiquen resultados o Laravel va a consultar mucho al mismo tiempo: mejor `2 vCPU / 2 GB RAM`.
 - Ejecuta `uvicorn` detras de `nginx` y levanta 2 workers si usas el plan de 2 GB.
 - Si Laravel consulta por `dni`, agrega cache en Laravel por 30 a 120 segundos para bajar aun mas la carga.
+- Si esperas un pico como 7 mil consultas de estudiantes, lo mas estable es que Laravel o Cloudflare cacheen la portada y que el browser consulte solo `GET /api/public/resultados/{dni}`.
 - Cuando usas backend `mysql`, la API mantiene un snapshot en memoria y por defecto lo refresca cada `60` segundos. Eso hace que `GET /api/v1/alumnos/{dni}` sea mucho mas rapido.
 - Ese mismo snapshot acelera `GET /api/v1/resultados/{dni}` y los filtros de puntajes.
 
