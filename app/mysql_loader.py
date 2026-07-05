@@ -15,6 +15,7 @@ def cli() -> int:
         description="Load the simulacro Excel dataset into MySQL or export a phpMyAdmin-friendly SQL file."
     )
     parser.add_argument("--excel", required=True, help="Path to the source .xlsx file.")
+    parser.add_argument("--results-excel", help="Optional path to the results .xlsx file.")
     parser.add_argument(
         "--mode",
         choices=["mysql", "sql"],
@@ -33,7 +34,8 @@ def cli() -> int:
     args = parser.parse_args()
 
     excel_path = Path(args.excel).expanduser().resolve()
-    dataset = build_dataset(excel_path)
+    results_excel_path = Path(args.results_excel).expanduser().resolve() if args.results_excel else settings.results_excel_path
+    dataset = build_dataset(excel_path, results_excel_path=results_excel_path)
     truncate = not args.no_truncate
 
     if args.mode == "sql":
@@ -47,7 +49,7 @@ def cli() -> int:
         return 0
 
     result = load_dataset_to_mysql(dataset, settings, truncate=truncate)
-    print(json.dumps({"mode": "mysql", **result}, ensure_ascii=False, indent=2))
+    print(json.dumps({"mode": "mysql", "results_excel": str(results_excel_path) if results_excel_path else "", **result}, ensure_ascii=False, indent=2))
     return 0
 
 

@@ -20,11 +20,16 @@ from app.schemas import (
     MensajeResponse,
     PanelAttendanceRequest,
     PanelAttendanceResponse,
+    ResultadoConsultaResponse,
+    Resultado,
+    ResultadoBusquedaResponse,
+    ResultadoResumenResponse,
     ResumenResponse,
 )
 
 settings = get_settings()
 PANEL_HTML_PATH = Path(__file__).resolve().parent / "panel.html"
+RESULTS_HTML_PATH = Path(__file__).resolve().parent / "resultados.html"
 STATIC_DIR_PATH = Path(__file__).resolve().parent / "static"
 
 
@@ -86,6 +91,14 @@ def panel_redirect() -> RedirectResponse:
     return RedirectResponse(url="/", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
 
+@app.api_route("/resultados", methods=["GET", "HEAD"], include_in_schema=False)
+def portal_resultados() -> FileResponse:
+    return FileResponse(
+        RESULTS_HTML_PATH,
+        headers={"Cache-Control": "no-store, max-age=0"},
+    )
+
+
 @app.post("/api/panel/asistencia", response_model=PanelAttendanceResponse, include_in_schema=False)
 @app.post("/panel/api/asistencia", response_model=PanelAttendanceResponse, include_in_schema=False)
 def panel_marcar_asistencia(
@@ -121,7 +134,10 @@ def api_root() -> dict[str, str]:
         "docs": "/docs",
         "health": "/health",
         "panel": "/",
+        "portal_resultados": "/resultados",
         "resumen": "/api/v1/resumen",
+        "resultados": "/api/v1/resultados",
+        "resultados_resumen": "/api/v1/resultados/resumen",
         "storage": settings.storage_backend,
     }
 
@@ -139,6 +155,84 @@ def health(settings: Settings = Depends(get_settings)) -> HealthResponse:
 @app.get("/api/v1/resumen", response_model=ResumenResponse, dependencies=[Depends(validate_api_key)])
 def resumen(repository: Repository = Depends(get_repository)) -> ResumenResponse:
     return ResumenResponse.model_validate(repository.summary())
+
+
+@app.get(
+    "/api/v1/resultados/resumen",
+    response_model=ResultadoResumenResponse,
+    dependencies=[Depends(validate_api_key)],
+)
+def resumen_resultados(repository: Repository = Depends(get_repository)) -> ResultadoResumenResponse:
+    return ResultadoResumenResponse.model_validate(repository.results_summary())
+
+
+@app.get(
+    "/api/public/resultados/{dni}",
+    response_model=ResultadoConsultaResponse,
+)
+def resultado_publico_por_dni(dni: str, repository: Repository = Depends(get_repository)) -> ResultadoConsultaResponse:
+    result = repository.get_public_result_by_dni(dni)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resultado no encontrado.")
+    return ResultadoConsultaResponse.model_validate(result)
+
+
+@app.get(
+    "/api/v1/resultados/{dni}",
+    response_model=Resultado,
+    dependencies=[Depends(validate_api_key)],
+)
+def resultado_por_dni(dni: str, repository: Repository = Depends(get_repository)) -> Resultado:
+    result = repository.get_result_by_dni(dni)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Resultado no encontrado.")
+    return Resultado.model_validate(result)
+
+
+@app.get(
+    "/api/v1/resultados",
+    response_model=ResultadoBusquedaResponse,
+    dependencies=[Depends(validate_api_key)],
+)
+def buscar_resultados(
+    repository: Repository = Depends(get_repository),
+    dni: str | None = Query(default=None, description="Busqueda exacta por DNI."),
+    q: str | None = Query(
+        default=None,
+        description="Busqueda libre por DNI, nombre, dependencia, aula o estado del resultado.",
+    ),
+    dependencia: str | None = Query(default=None, description="Filtro exacto por dependencia."),
+    estado_resultado: str | None = Query(
+        default=None,
+        description="Filtro exacto por estado: ok, sin_lectura, puntaje_vacio, aula_vacia o puntaje_cero.",
+    ),
+    solo_cero: bool = Query(
+        default=False,
+        description="Si es true, devuelve solo resultados con puntaje final 0, incluidos los normalizados desde vacio.",
+    ),
+    puntaje_min: float | None = Query(default=None, description="Filtro por puntaje minimo."),
+    puntaje_max: float | None = Query(default=None, description="Filtro por puntaje maximo."),
+    limit: int = Query(default=settings.default_limit, ge=1),
+    offset: int = Query(default=0, ge=0),
+) -> ResultadoBusquedaResponse:
+    safe_limit = min(limit, settings.max_limit)
+    total, items = repository.search_results(
+        dni=dni,
+        q=q,
+        dependencia=dependencia,
+        estado_resultado=estado_resultado,
+        only_zero=solo_cero,
+        puntaje_min=puntaje_min,
+        puntaje_max=puntaje_max,
+        limit=safe_limit,
+        offset=offset,
+    )
+    return ResultadoBusquedaResponse(
+        total=total,
+        limite=safe_limit,
+        offset=offset,
+        items=[Resultado.model_validate(item) for item in items],
+    )
 
 
 @app.get("/api/v1/alumnos/{dni}", response_model=Alumno, dependencies=[Depends(validate_api_key)])

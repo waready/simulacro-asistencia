@@ -82,9 +82,28 @@ def student_search_text(student: dict[str, Any]) -> str:
     )
 
 
+def result_search_text(result: dict[str, Any]) -> str:
+    return normalize_text(
+        " ".join(
+            [
+                result["dni"],
+                result["paterno"],
+                result["materno"],
+                result["nombres"],
+                result["nombre_completo"],
+                result["dependencia"],
+                result["cod_examen"],
+                result["aula"],
+                result["estado_resultado"],
+            ]
+        )
+    )
+
+
 def render_mysql_schema(settings: Settings) -> str:
     students_table = quote_identifier(settings.db_students_table)
     event_table = quote_identifier(settings.db_event_table)
+    results_table = quote_identifier(settings.db_results_table)
 
     return f"""
 CREATE TABLE IF NOT EXISTS {event_table} (
@@ -94,6 +113,8 @@ CREATE TABLE IF NOT EXISTS {event_table} (
     titulo VARCHAR(255) NOT NULL,
     source_file VARCHAR(1024) NULL,
     generated_at DATETIME NOT NULL,
+    results_source_file VARCHAR(1024) NULL,
+    results_generated_at DATETIME NULL,
     total_alumnos INT NOT NULL,
     total_areas INT NOT NULL,
     total_salones INT NOT NULL,
@@ -124,6 +145,42 @@ CREATE TABLE IF NOT EXISTS {students_table} (
     KEY idx_{validate_identifier(settings.db_students_table)}_salon_key (salon_key),
     KEY idx_{validate_identifier(settings.db_students_table)}_sede_key (sede_key)
 ) ENGINE=InnoDB DEFAULT CHARSET={settings.db_charset};
+
+CREATE TABLE IF NOT EXISTS {results_table} (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    dni VARCHAR(16) NOT NULL,
+    paterno VARCHAR(120) NOT NULL,
+    materno VARCHAR(120) NOT NULL,
+    nombres VARCHAR(255) NOT NULL,
+    nombre_completo VARCHAR(255) NOT NULL,
+    cod_plaza VARCHAR(60) NOT NULL,
+    plaza VARCHAR(255) NOT NULL,
+    dependencia VARCHAR(120) NOT NULL,
+    aula VARCHAR(60) NOT NULL,
+    litho_ide VARCHAR(60) NOT NULL,
+    lectura_nro_ide VARCHAR(60) NOT NULL,
+    cod_examen VARCHAR(120) NOT NULL,
+    litho_res VARCHAR(60) NOT NULL,
+    lectura_nro_res VARCHAR(60) NOT NULL,
+    respuestas TEXT NOT NULL,
+    puntaje DECIMAL(10,2) NOT NULL DEFAULT 0,
+    puntaje_reportado DECIMAL(10,2) NULL,
+    puntaje_original VARCHAR(32) NOT NULL,
+    puntaje_fue_completado TINYINT(1) NOT NULL DEFAULT 0,
+    puntaje_es_cero TINYINT(1) NOT NULL DEFAULT 0,
+    respuestas_vacias TINYINT(1) NOT NULL DEFAULT 0,
+    estado_resultado VARCHAR(40) NOT NULL,
+    fila_excel INT NOT NULL,
+    dependencia_key VARCHAR(120) NOT NULL,
+    estado_key VARCHAR(40) NOT NULL,
+    search_text VARCHAR(900) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_{validate_identifier(settings.db_results_table)}_dni (dni),
+    KEY idx_{validate_identifier(settings.db_results_table)}_dependencia_key (dependencia_key),
+    KEY idx_{validate_identifier(settings.db_results_table)}_estado_key (estado_key),
+    KEY idx_{validate_identifier(settings.db_results_table)}_puntaje (puntaje)
+) ENGINE=InnoDB DEFAULT CHARSET={settings.db_charset};
 """.strip()
 
 
@@ -152,6 +209,25 @@ def ensure_mysql_schema(settings: Settings) -> None:
                     ADD COLUMN asistencia TINYINT(1) NOT NULL DEFAULT 0 AFTER fila_excel
                     """
                 )
+            cursor.execute(
+                f"""
+                SELECT COUNT(*) AS total
+                FROM information_schema.columns
+                WHERE table_schema = %s
+                  AND table_name = %s
+                  AND column_name = 'results_source_file'
+                """,
+                (settings.db_name, settings.db_event_table),
+            )
+            has_results_source = int(cursor.fetchone()["total"]) > 0
+            if not has_results_source:
+                cursor.execute(
+                    f"""
+                    ALTER TABLE {quote_identifier(settings.db_event_table)}
+                    ADD COLUMN results_source_file VARCHAR(1024) NULL AFTER generated_at,
+                    ADD COLUMN results_generated_at DATETIME NULL AFTER results_source_file
+                    """
+                )
         connection.commit()
 
 
@@ -160,10 +236,18 @@ def load_dataset_to_mysql(dataset: dict[str, Any], settings: Settings, *, trunca
 
     students_table = quote_identifier(settings.db_students_table)
     event_table = quote_identifier(settings.db_event_table)
+    results_table = quote_identifier(settings.db_results_table)
     generated_at = mysql_generated_at(dataset.get("generated_at"))
+    results_generated_at = (
+        mysql_generated_at(dataset.get("resultados_generated_at"))
+        if dataset.get("resultados_generated_at")
+        else None
+    )
     summary = dataset["resumen"]
+    results_summary = dataset.get("resumen_resultados", {})
     event = dataset["evento"]
     students = dataset["alumnos"]
+    results = dataset.get("resultados", [])
 
     rows = [
         (
@@ -183,25 +267,60 @@ def load_dataset_to_mysql(dataset: dict[str, Any], settings: Settings, *, trunca
         )
         for student in students
     ]
+    result_rows = [
+        (
+            result["dni"],
+            result["paterno"],
+            result["materno"],
+            result["nombres"],
+            result["nombre_completo"],
+            result["cod_plaza"],
+            result["plaza"],
+            result["dependencia"],
+            result["aula"],
+            result["litho_ide"],
+            result["lectura_nro_ide"],
+            result["cod_examen"],
+            result["litho_res"],
+            result["lectura_nro_res"],
+            result["respuestas"],
+            result["puntaje"],
+            result["puntaje_reportado"],
+            result["puntaje_original"],
+            int(bool(result["puntaje_fue_completado"])),
+            int(bool(result["puntaje_es_cero"])),
+            int(bool(result["respuestas_vacias"])),
+            result["estado_resultado"],
+            result["fila_excel"],
+            normalize_text(result["dependencia"]),
+            normalize_text(result["estado_resultado"]),
+            result_search_text(result),
+        )
+        for result in results
+    ]
 
     with get_mysql_connection(settings) as connection:
         with connection.cursor() as cursor:
             if truncate:
                 cursor.execute(f"DELETE FROM {students_table}")
+                cursor.execute(f"DELETE FROM {results_table}")
                 cursor.execute(f"DELETE FROM {event_table}")
 
             cursor.execute(
                 f"""
                 INSERT INTO {event_table} (
                     id, institucion, organizador, titulo, source_file, generated_at,
+                    results_source_file, results_generated_at,
                     total_alumnos, total_areas, total_salones, total_sedes
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE
                     institucion = VALUES(institucion),
                     organizador = VALUES(organizador),
                     titulo = VALUES(titulo),
                     source_file = VALUES(source_file),
                     generated_at = VALUES(generated_at),
+                    results_source_file = VALUES(results_source_file),
+                    results_generated_at = VALUES(results_generated_at),
                     total_alumnos = VALUES(total_alumnos),
                     total_areas = VALUES(total_areas),
                     total_salones = VALUES(total_salones),
@@ -214,6 +333,8 @@ def load_dataset_to_mysql(dataset: dict[str, Any], settings: Settings, *, trunca
                     event["titulo"],
                     dataset.get("source_file"),
                     generated_at,
+                    dataset.get("resultados_source_file"),
+                    results_generated_at,
                     summary["total_alumnos"],
                     summary["total_areas"],
                     summary["total_salones"],
@@ -245,6 +366,48 @@ def load_dataset_to_mysql(dataset: dict[str, Any], settings: Settings, *, trunca
                 rows,
             )
 
+            if result_rows:
+                cursor.executemany(
+                    f"""
+                    INSERT INTO {results_table} (
+                        dni, paterno, materno, nombres, nombre_completo,
+                        cod_plaza, plaza, dependencia, aula,
+                        litho_ide, lectura_nro_ide, cod_examen,
+                        litho_res, lectura_nro_res, respuestas,
+                        puntaje, puntaje_reportado, puntaje_original,
+                        puntaje_fue_completado, puntaje_es_cero, respuestas_vacias,
+                        estado_resultado, fila_excel, dependencia_key, estado_key, search_text
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE
+                        paterno = VALUES(paterno),
+                        materno = VALUES(materno),
+                        nombres = VALUES(nombres),
+                        nombre_completo = VALUES(nombre_completo),
+                        cod_plaza = VALUES(cod_plaza),
+                        plaza = VALUES(plaza),
+                        dependencia = VALUES(dependencia),
+                        aula = VALUES(aula),
+                        litho_ide = VALUES(litho_ide),
+                        lectura_nro_ide = VALUES(lectura_nro_ide),
+                        cod_examen = VALUES(cod_examen),
+                        litho_res = VALUES(litho_res),
+                        lectura_nro_res = VALUES(lectura_nro_res),
+                        respuestas = VALUES(respuestas),
+                        puntaje = VALUES(puntaje),
+                        puntaje_reportado = VALUES(puntaje_reportado),
+                        puntaje_original = VALUES(puntaje_original),
+                        puntaje_fue_completado = VALUES(puntaje_fue_completado),
+                        puntaje_es_cero = VALUES(puntaje_es_cero),
+                        respuestas_vacias = VALUES(respuestas_vacias),
+                        estado_resultado = VALUES(estado_resultado),
+                        fila_excel = VALUES(fila_excel),
+                        dependencia_key = VALUES(dependencia_key),
+                        estado_key = VALUES(estado_key),
+                        search_text = VALUES(search_text)
+                    """,
+                    result_rows,
+                )
+
         connection.commit()
 
     return {
@@ -252,6 +415,8 @@ def load_dataset_to_mysql(dataset: dict[str, Any], settings: Settings, *, trunca
         "total_areas": int(summary["total_areas"]),
         "total_salones": int(summary["total_salones"]),
         "total_sedes": int(summary["total_sedes"]),
+        "total_resultados": int(results_summary.get("total_resultados", len(result_rows))),
+        "total_resultados_cero": int(results_summary.get("total_puntaje_cero", 0)),
     }
 
 
@@ -278,10 +443,17 @@ def write_mysql_dump(
 ) -> Path:
     students_table = quote_identifier(settings.db_students_table)
     event_table = quote_identifier(settings.db_event_table)
+    results_table = quote_identifier(settings.db_results_table)
     generated_at = mysql_generated_at(dataset.get("generated_at"))
+    results_generated_at = (
+        mysql_generated_at(dataset.get("resultados_generated_at"))
+        if dataset.get("resultados_generated_at")
+        else None
+    )
     summary = dataset["resumen"]
     event = dataset["evento"]
     students = dataset["alumnos"]
+    results = dataset.get("resultados", [])
 
     lines = [render_mysql_schema(settings), ""]
     if truncate:
@@ -289,6 +461,7 @@ def write_mysql_dump(
             [
                 "SET FOREIGN_KEY_CHECKS = 0;",
                 f"DELETE FROM {students_table};",
+                f"DELETE FROM {results_table};",
                 f"DELETE FROM {event_table};",
                 "SET FOREIGN_KEY_CHECKS = 1;",
                 "",
@@ -303,6 +476,8 @@ def write_mysql_dump(
             sql_literal(event["titulo"]),
             sql_literal(dataset.get("source_file")),
             sql_literal(generated_at),
+            sql_literal(dataset.get("resultados_source_file")),
+            sql_literal(results_generated_at),
             sql_literal(summary["total_alumnos"]),
             sql_literal(summary["total_areas"]),
             sql_literal(summary["total_salones"]),
@@ -313,6 +488,7 @@ def write_mysql_dump(
         f"""
 INSERT INTO {event_table} (
     id, institucion, organizador, titulo, source_file, generated_at,
+    results_source_file, results_generated_at,
     total_alumnos, total_areas, total_salones, total_sedes
 ) VALUES ({event_values})
 ON DUPLICATE KEY UPDATE
@@ -321,6 +497,8 @@ ON DUPLICATE KEY UPDATE
     titulo = VALUES(titulo),
     source_file = VALUES(source_file),
     generated_at = VALUES(generated_at),
+    results_source_file = VALUES(results_source_file),
+    results_generated_at = VALUES(results_generated_at),
     total_alumnos = VALUES(total_alumnos),
     total_areas = VALUES(total_areas),
     total_salones = VALUES(total_salones),
@@ -376,6 +554,88 @@ ON DUPLICATE KEY UPDATE
     capacidad_salon = VALUES(capacidad_salon),
     fila_excel = VALUES(fila_excel),
     asistencia = VALUES(asistencia),
+    search_text = VALUES(search_text);
+""".strip()
+        )
+        lines.append("")
+
+    for batch_start in range(0, len(results), batch_size):
+        chunk = results[batch_start : batch_start + batch_size]
+        values_sql = []
+        for result in chunk:
+            values_sql.append(
+                "("
+                + ", ".join(
+                    [
+                        sql_literal(result["dni"]),
+                        sql_literal(result["paterno"]),
+                        sql_literal(result["materno"]),
+                        sql_literal(result["nombres"]),
+                        sql_literal(result["nombre_completo"]),
+                        sql_literal(result["cod_plaza"]),
+                        sql_literal(result["plaza"]),
+                        sql_literal(result["dependencia"]),
+                        sql_literal(result["aula"]),
+                        sql_literal(result["litho_ide"]),
+                        sql_literal(result["lectura_nro_ide"]),
+                        sql_literal(result["cod_examen"]),
+                        sql_literal(result["litho_res"]),
+                        sql_literal(result["lectura_nro_res"]),
+                        sql_literal(result["respuestas"]),
+                        sql_literal(result["puntaje"]),
+                        sql_literal(result["puntaje_reportado"]),
+                        sql_literal(result["puntaje_original"]),
+                        sql_literal(int(bool(result["puntaje_fue_completado"]))),
+                        sql_literal(int(bool(result["puntaje_es_cero"]))),
+                        sql_literal(int(bool(result["respuestas_vacias"]))),
+                        sql_literal(result["estado_resultado"]),
+                        sql_literal(result["fila_excel"]),
+                        sql_literal(normalize_text(result["dependencia"])),
+                        sql_literal(normalize_text(result["estado_resultado"])),
+                        sql_literal(result_search_text(result)),
+                    ]
+                )
+                + ")"
+            )
+
+        joined_values = ",\n".join(values_sql)
+        lines.append(
+            f"""
+INSERT INTO {results_table} (
+    dni, paterno, materno, nombres, nombre_completo,
+    cod_plaza, plaza, dependencia, aula,
+    litho_ide, lectura_nro_ide, cod_examen,
+    litho_res, lectura_nro_res, respuestas,
+    puntaje, puntaje_reportado, puntaje_original,
+    puntaje_fue_completado, puntaje_es_cero, respuestas_vacias,
+    estado_resultado, fila_excel, dependencia_key, estado_key, search_text
+) VALUES
+{joined_values}
+ON DUPLICATE KEY UPDATE
+    paterno = VALUES(paterno),
+    materno = VALUES(materno),
+    nombres = VALUES(nombres),
+    nombre_completo = VALUES(nombre_completo),
+    cod_plaza = VALUES(cod_plaza),
+    plaza = VALUES(plaza),
+    dependencia = VALUES(dependencia),
+    aula = VALUES(aula),
+    litho_ide = VALUES(litho_ide),
+    lectura_nro_ide = VALUES(lectura_nro_ide),
+    cod_examen = VALUES(cod_examen),
+    litho_res = VALUES(litho_res),
+    lectura_nro_res = VALUES(lectura_nro_res),
+    respuestas = VALUES(respuestas),
+    puntaje = VALUES(puntaje),
+    puntaje_reportado = VALUES(puntaje_reportado),
+    puntaje_original = VALUES(puntaje_original),
+    puntaje_fue_completado = VALUES(puntaje_fue_completado),
+    puntaje_es_cero = VALUES(puntaje_es_cero),
+    respuestas_vacias = VALUES(respuestas_vacias),
+    estado_resultado = VALUES(estado_resultado),
+    fila_excel = VALUES(fila_excel),
+    dependencia_key = VALUES(dependencia_key),
+    estado_key = VALUES(estado_key),
     search_text = VALUES(search_text);
 """.strip()
         )

@@ -13,6 +13,23 @@ from xml.etree import ElementTree as ET
 
 MAIN_NS = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
 NS = {"main": MAIN_NS}
+RESULTS_HEADER = (
+    "DNI",
+    "PATERNO",
+    "MATERNO",
+    "NOMBRES",
+    "COD_PLAZA",
+    "PLAZA",
+    "DEPENDENCIA",
+    "AULA",
+    "LITHO_IDE",
+    "LECTURA_NRO_IDE",
+    "COD_EXAMEN",
+    "LITHO_RES",
+    "LECTURA_NRO_RES",
+    "RESPUESTAS",
+    "PUNTAJE",
+)
 
 
 def normalize_text(value: str) -> str:
@@ -20,6 +37,14 @@ def normalize_text(value: str) -> str:
     without_marks = "".join(ch for ch in normalized if not unicodedata.combining(ch))
     without_dash = without_marks.replace("\u2014", "-")
     return " ".join(without_dash.upper().split())
+
+
+def row_value(row: list[str], index: int) -> str:
+    return row[index].strip() if len(row) > index else ""
+
+
+def compose_full_name(*parts: str) -> str:
+    return " ".join(part.strip() for part in parts if part and part.strip())
 
 
 def split_block_header(value: str) -> dict[str, Any] | None:
@@ -201,13 +226,153 @@ def parse_dataset(excel_path: Path) -> dict[str, Any]:
     }
 
 
+def parse_score_value(value: str) -> float | None:
+    cleaned = value.strip()
+    if not cleaned:
+        return None
+    return float(cleaned)
+
+
+def resolve_result_state(
+    *,
+    aula: str,
+    respuestas: str,
+    puntaje_reportado: float | None,
+) -> str:
+    respuestas_vacias = not "".join(respuestas.split())
+
+    if puntaje_reportado is None:
+        if respuestas_vacias and not aula:
+            return "sin_lectura"
+        return "puntaje_vacio"
+
+    if puntaje_reportado == 0:
+        return "puntaje_cero"
+
+    if not aula:
+        return "aula_vacia"
+
+    return "ok"
+
+
+def build_results_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
+    total = len(results)
+    by_state = dict(sorted(Counter(item["estado_resultado"] for item in results).items()))
+    scores = [float(item["puntaje_reportado"]) for item in results if item["puntaje_reportado"] is not None]
+    total_reported = len(scores)
+    total_missing = total - total_reported
+    total_zero = sum(1 for item in results if item["puntaje_es_cero"])
+    total_normalized = sum(1 for item in results if item["puntaje_es_cero"] and not item["puntaje_fue_completado"])
+
+    average_score = round(sum(scores) / total_reported, 2) if total_reported else 0.0
+    max_score = round(max(scores), 2) if total_reported else 0.0
+    min_score = round(min(scores), 2) if total_reported else 0.0
+
+    return {
+        "total_resultados": total,
+        "total_con_puntaje_reportado": total_reported,
+        "total_sin_puntaje_reportado": total_missing,
+        "total_puntaje_cero": total_zero,
+        "total_normalizados_a_cero": total_normalized,
+        "puntaje_promedio_reportado": average_score,
+        "puntaje_maximo_reportado": max_score,
+        "puntaje_minimo_reportado": min_score,
+        "resultados_por_estado": by_state,
+    }
+
+
+def parse_results_dataset(excel_path: Path) -> dict[str, Any]:
+    rows = iter_rows(excel_path)
+    if len(rows) < 2:
+        raise ValueError(f"The Excel file {excel_path} does not contain the expected results layout.")
+
+    normalized_header = [normalize_text(value) for value in rows[0]]
+    expected_header = [normalize_text(value) for value in RESULTS_HEADER]
+    if normalized_header[: len(expected_header)] != expected_header:
+        raise ValueError(f"The Excel file {excel_path} does not contain the expected results columns.")
+
+    index_map = {column: position for position, column in enumerate(RESULTS_HEADER)}
+    results: list[dict[str, Any]] = []
+
+    for row_number, row in enumerate(rows[1:], start=2):
+        dni = row_value(row, index_map["DNI"])
+        if not dni or not dni.isdigit():
+            continue
+
+        paterno = row_value(row, index_map["PATERNO"])
+        materno = row_value(row, index_map["MATERNO"])
+        nombres = row_value(row, index_map["NOMBRES"])
+        puntaje_original = row_value(row, index_map["PUNTAJE"])
+        puntaje_reportado = parse_score_value(puntaje_original)
+        respuestas = row_value(row, index_map["RESPUESTAS"])
+        aula = row_value(row, index_map["AULA"])
+        estado_resultado = resolve_result_state(
+            aula=aula,
+            respuestas=respuestas,
+            puntaje_reportado=puntaje_reportado,
+        )
+        puntaje = 0.0 if puntaje_reportado is None else round(puntaje_reportado, 2)
+
+        results.append(
+            {
+                "dni": dni,
+                "paterno": paterno,
+                "materno": materno,
+                "nombres": nombres,
+                "nombre_completo": compose_full_name(paterno, materno, nombres),
+                "cod_plaza": row_value(row, index_map["COD_PLAZA"]),
+                "plaza": row_value(row, index_map["PLAZA"]),
+                "dependencia": row_value(row, index_map["DEPENDENCIA"]),
+                "aula": aula,
+                "litho_ide": row_value(row, index_map["LITHO_IDE"]),
+                "lectura_nro_ide": row_value(row, index_map["LECTURA_NRO_IDE"]),
+                "cod_examen": row_value(row, index_map["COD_EXAMEN"]),
+                "litho_res": row_value(row, index_map["LITHO_RES"]),
+                "lectura_nro_res": row_value(row, index_map["LECTURA_NRO_RES"]),
+                "respuestas": respuestas,
+                "puntaje": puntaje,
+                "puntaje_reportado": None if puntaje_reportado is None else round(puntaje_reportado, 2),
+                "puntaje_original": puntaje_original,
+                "puntaje_fue_completado": puntaje_reportado is not None,
+                "puntaje_es_cero": puntaje == 0,
+                "respuestas_vacias": not "".join(respuestas.split()),
+                "estado_resultado": estado_resultado,
+                "fila_excel": row_number,
+            }
+        )
+
+    return {
+        "source_file": str(excel_path),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "resumen": build_results_summary(results),
+        "resultados": results,
+    }
+
+
 def write_dataset(dataset: dict[str, Any], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(dataset, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def build_dataset(excel_path: Path, output_path: Path | None = None) -> dict[str, Any]:
+def build_dataset(
+    excel_path: Path,
+    output_path: Path | None = None,
+    *,
+    results_excel_path: Path | None = None,
+) -> dict[str, Any]:
     dataset = parse_dataset(excel_path)
+    if results_excel_path is not None:
+        results_dataset = parse_results_dataset(results_excel_path)
+        dataset["resultados_source_file"] = results_dataset["source_file"]
+        dataset["resultados_generated_at"] = results_dataset["generated_at"]
+        dataset["resumen_resultados"] = results_dataset["resumen"]
+        dataset["resultados"] = results_dataset["resultados"]
+    else:
+        dataset["resultados_source_file"] = ""
+        dataset["resultados_generated_at"] = ""
+        dataset["resumen_resultados"] = build_results_summary([])
+        dataset["resultados"] = []
+
     if output_path is not None:
         write_dataset(dataset, output_path)
     return dataset
@@ -217,12 +382,14 @@ def cli() -> int:
     parser = argparse.ArgumentParser(description="Build a normalized JSON dataset from the simulacro Excel file.")
     parser.add_argument("--excel", required=True, help="Path to the source .xlsx file.")
     parser.add_argument("--out", help="Path to the generated JSON file.")
+    parser.add_argument("--results-excel", help="Optional path to the results .xlsx file.")
     args = parser.parse_args()
 
     excel_path = Path(args.excel).expanduser().resolve()
     output_path = Path(args.out).expanduser().resolve() if args.out else None
+    results_excel_path = Path(args.results_excel).expanduser().resolve() if args.results_excel else None
 
-    dataset = build_dataset(excel_path, output_path)
+    dataset = build_dataset(excel_path, output_path, results_excel_path=results_excel_path)
     print(
         json.dumps(
             {
@@ -230,6 +397,8 @@ def cli() -> int:
                 "total_alumnos": dataset["resumen"]["total_alumnos"],
                 "total_salones": dataset["resumen"]["total_salones"],
                 "total_sedes": dataset["resumen"]["total_sedes"],
+                "total_resultados": dataset["resumen_resultados"]["total_resultados"],
+                "total_ceros": dataset["resumen_resultados"]["total_puntaje_cero"],
             },
             ensure_ascii=False,
             indent=2,

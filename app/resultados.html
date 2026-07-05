@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>CEPREUNA | Resultados</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap");
+
+    :root {
+      --blue-950: #0f2b6f;
+      --blue-900: #14398d;
+      --blue-700: #1787d5;
+      --blue-500: #21a3dd;
+      --blue-100: #edf5ff;
+      --ink-950: #17315f;
+      --ink-800: #31476f;
+      --ink-600: #6b7f9f;
+      --line: #dbe5f1;
+      --line-strong: #c9d7ea;
+      --surface: #ffffff;
+      --success: #0c9863;
+      --success-soft: #e9fff5;
+      --warning: #bd7800;
+      --warning-soft: #fff2d8;
+      --danger: #d33b3b;
+      --danger-soft: #ffe9e9;
+      --shadow-xl: 0 38px 90px rgba(12, 47, 122, 0.24);
+      --shadow-md: 0 18px 44px rgba(12, 47, 122, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Outfit", "Segoe UI", sans-serif;
+      color: var(--ink-950);
+      background:
+        radial-gradient(circle at bottom center, rgba(33, 163, 221, 0.32), transparent 32%),
+        linear-gradient(180deg, #1f4f9b 0%, #16468f 24%, #1781c8 73%, #21a5dd 100%);
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+
+    .page {
+      width: min(100%, 40rem);
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.97);
+      border-radius: 2rem;
+      box-shadow: var(--shadow-xl);
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    .card-inner {
+      padding: 1.35rem 1.2rem 1.3rem;
+    }
+
+    .brand {
+      display: grid;
+      place-items: center;
+      gap: 0.85rem;
+      text-align: center;
+    }
+
+    .brand-logos {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.9rem;
+      width: 100%;
+    }
+
+    .brand-logo-main,
+    .brand-logo-side {
+      display: block;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .brand-logo-main {
+      width: min(11rem, 46vw);
+      height: auto;
+    }
+
+    .brand-logo-side {
+      width: clamp(3rem, 12vw, 4.2rem);
+      height: clamp(3rem, 12vw, 4.2rem);
+      padding: 0.25rem;
+      border-radius: 1rem;
+      background: #ffffff;
+      box-shadow: 0 12px 26px rgba(20, 57, 141, 0.14);
+    }
+
+    .brand-copy {
+      display: grid;
+      gap: 0.1rem;
+      color: #4a6294;
+      line-height: 1.15;
+    }
+
+    .brand-copy strong {
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .brand-copy span {
+      font-size: 0.76rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .divider {
+      height: 1px;
+      margin: 1rem -1.2rem 0;
+      background: linear-gradient(90deg, transparent, rgba(201, 215, 234, 0.95), transparent);
+    }
+
+    .hero {
+      padding-top: 1.1rem;
+      text-align: center;
+    }
+
+    .hero-title {
+      margin: 0;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: clamp(2.2rem, 9vw, 3.5rem);
+      line-height: 0.96;
+      font-weight: 800;
+      color: #17378b;
+    }
+
+    .hero-subtitle {
+      margin: 0.55rem 0 0;
+      color: #176fb7;
+      font-size: clamp(1rem, 3.7vw, 1.55rem);
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0.9rem;
+      padding: 0.56rem 1rem;
+      border-radius: 999px;
+      background: #eef3fb;
+      color: #29428c;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    }
+
+    .form-shell {
+      margin-top: 1.4rem;
+    }
+
+    .field-label {
+      display: block;
+      margin-bottom: 0.7rem;
+      color: #394f73;
+      font-size: 0.94rem;
+      font-weight: 700;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .dni-input {
+      width: 100%;
+      min-height: 5rem;
+      padding: 0 1.15rem;
+      border: 2px solid #d8e2ef;
+      border-radius: 1.25rem;
+      outline: 0;
+      background: #fff;
+      color: #17378b;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: clamp(1.8rem, 7vw, 2.3rem);
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-align: center;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+    }
+
+    .dni-input::placeholder {
+      color: #c7d3e4;
+      letter-spacing: 0.16em;
+    }
+
+    .dni-input:focus {
+      border-color: #84b9ea;
+      box-shadow: 0 0 0 4px rgba(23, 135, 213, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .input-hint {
+      margin: 0.8rem 0 0;
+      color: #8ca0be;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .button {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      min-height: 4.35rem;
+      border-radius: 1.25rem;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: 1.02rem;
+      font-weight: 800;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+    }
+
+    .button:active {
+      transform: translateY(1px);
+    }
+
+    .button.primary {
+      background: linear-gradient(90deg, #183887 0%, #20a5dd 100%);
+      color: #fff;
+      box-shadow: 0 22px 38px rgba(24, 88, 169, 0.24);
+    }
+
+    .button.secondary {
+      min-height: 3rem;
+      background: rgba(20, 57, 141, 0.06);
+      color: #214189;
+      font-size: 0.88rem;
+    }
+
+    .feedback {
+      margin-top: 0.9rem;
+      padding: 0.9rem 1rem;
+      border-radius: 1rem;
+      font-size: 0.92rem;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .feedback[hidden],
+    .result-panel[hidden] {
+      display: none;
+    }
+
+    .feedback.info {
+      border: 1px solid rgba(23, 135, 213, 0.14);
+      background: var(--blue-100);
+      color: #1b68ac;
+    }
+
+    .feedback.error {
+      border: 1px solid rgba(211, 59, 59, 0.16);
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .result-panel {
+      margin-top: 1.15rem;
+      padding-top: 1.05rem;
+      border-top: 1px solid #e2eaf5;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+    }
+
+    .status-copy {
+      min-width: 0;
+    }
+
+    .student-name {
+      margin: 0;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: clamp(1.12rem, 4.5vw, 1.45rem);
+      line-height: 1.18;
+      font-weight: 800;
+      color: #17315f;
+    }
+
+    .student-dni {
+      margin: 0.35rem 0 0;
+      color: #6d7f9f;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.56rem 0.82rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .badge.success {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .badge.warning {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    .badge.danger {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .score-card {
+      margin-top: 1rem;
+      padding: 1rem 1rem 1.05rem;
+      border-radius: 1.45rem;
+      background: linear-gradient(145deg, rgba(15, 43, 111, 0.98), rgba(23, 135, 213, 0.96));
+      color: #fff;
+      text-align: center;
+      box-shadow: var(--shadow-md);
+    }
+
+    .score-card.warning {
+      background: linear-gradient(145deg, #8b5500, #c88600);
+    }
+
+    .score-card span {
+      display: block;
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .score-value {
+      display: block;
+      margin-top: 0.34rem;
+      font-family: "Sora", "Outfit", sans-serif;
+      font-size: clamp(2.7rem, 13vw, 4.2rem);
+      line-height: 0.95;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.72rem;
+      margin-top: 1rem;
+    }
+
+    .detail {
+      padding: 0.82rem 0.85rem;
+      border-radius: 1rem;
+      background: #f6f9fd;
+      border: 1px solid #e4ecf6;
+    }
+
+    .detail span {
+      display: block;
+      color: #7b8dac;
+      font-size: 0.69rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .detail strong {
+      display: block;
+      margin-top: 0.26rem;
+      color: #2a4069;
+      font-size: 0.95rem;
+      line-height: 1.28;
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .message {
+      margin-top: 0.95rem;
+      padding: 0.95rem 1rem;
+      border-radius: 1.05rem;
+      border: 1px solid #e8d9b4;
+      background: linear-gradient(180deg, rgba(255, 244, 218, 0.95), rgba(255, 255, 255, 0.98));
+    }
+
+    .message span {
+      display: block;
+      color: #956100;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .message p {
+      margin: 0.4rem 0 0;
+      color: #556987;
+      font-size: 0.93rem;
+      line-height: 1.52;
+    }
+
+    .footer {
+      margin-top: 1.1rem;
+      color: rgba(255, 255, 255, 0.62);
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    @media (max-width: 32rem) {
+      body {
+        display: block;
+      }
+
+      .page {
+        padding-top: 0.4rem;
+      }
+
+      .card-inner {
+        padding: 1.15rem 1rem 1.1rem;
+      }
+
+      .divider {
+        margin-left: -1rem;
+        margin-right: -1rem;
+      }
+
+      .status-row,
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .status-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+
+    @media (min-width: 40rem) {
+      body {
+        padding: 1.6rem;
+      }
+
+      .card-inner {
+        padding: 1.5rem 1.45rem 1.4rem;
+      }
+
+      .divider {
+        margin-left: -1.45rem;
+        margin-right: -1.45rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="card">
+      <div class="card-inner">
+        <header class="brand">
+          <div class="brand-logos">
+            <img class="brand-logo-main" src="/static/cepreuna-logo.png" alt="Logo CEPREUNA">
+            <img class="brand-logo-side" src="/static/unap-shield.png" alt="Escudo UNAP">
+          </div>
+          <div class="brand-copy">
+            <strong>Universidad Nacional del Altiplano</strong>
+            <span>Centro de Estudios Preuniversitario</span>
+          </div>
+        </header>
+
+        <div class="divider" aria-hidden="true"></div>
+
+        <section class="hero">
+          <h1 class="hero-title">RESULTADOS</h1>
+          <p class="hero-subtitle">Simulacro - Examen de Admision</p>
+          <div class="hero-pill">C.U. - 05 de julio de 2026</div>
+        </section>
+
+        <section class="form-shell">
+          <form id="lookup-form" autocomplete="off">
+            <label class="field-label" for="dni-input">Ingresa tu DNI</label>
+
+            <div class="input-wrap">
+              <input
+                id="dni-input"
+                class="dni-input"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                maxlength="16"
+                placeholder="00000000"
+                autofocus
+              >
+            </div>
+
+            <p class="input-hint">Solo numeros - 8 digitos</p>
+
+            <div class="actions">
+              <button class="button primary" id="submit-button" type="submit">CONSULTAR</button>
+              <button class="button secondary" id="clear-button" type="button">Limpiar</button>
+            </div>
+          </form>
+
+          <div class="feedback info" id="feedback" hidden>Ingresa tu DNI para consultar tu resultado.</div>
+
+          <section class="result-panel" id="result-panel" hidden>
+            <div class="status-row">
+              <div class="status-copy">
+                <h2 class="student-name" id="student-name">Nombre del estudiante</h2>
+                <p class="student-dni">DNI: <span id="student-dni">00000000</span></p>
+              </div>
+              <div class="badge success" id="status-badge">Resultado registrado</div>
+            </div>
+
+            <article class="score-card" id="score-card">
+              <span>Puntaje obtenido</span>
+              <strong class="score-value" id="student-score">0.00</strong>
+            </article>
+
+            <div class="detail-grid">
+              <article class="detail">
+                <span>Dependencia</span>
+                <strong id="student-dependencia">-</strong>
+              </article>
+              <article class="detail">
+                <span>Area</span>
+                <strong id="student-area">-</strong>
+              </article>
+              <article class="detail">
+                <span>Sede</span>
+                <strong id="student-sede">-</strong>
+              </article>
+              <article class="detail">
+                <span>Aula en resultados</span>
+                <strong id="student-aula">-</strong>
+              </article>
+              <article class="detail">
+                <span>Salon referencial</span>
+                <strong id="student-salon">-</strong>
+              </article>
+              <article class="detail">
+                <span>Estado</span>
+                <strong id="student-status">-</strong>
+              </article>
+            </div>
+
+            <article class="message">
+              <span>Observacion</span>
+              <p id="student-message">Sin observaciones.</p>
+            </article>
+          </section>
+        </section>
+      </div>
+    </section>
+
+    <div class="footer">&copy; 2026 CEPREUNA - Universidad Nacional del Altiplano</div>
+  </main>
+
+  <script>
+    const form = document.getElementById("lookup-form");
+    const input = document.getElementById("dni-input");
+    const submitButton = document.getElementById("submit-button");
+    const clearButton = document.getElementById("clear-button");
+    const feedback = document.getElementById("feedback");
+    const resultPanel = document.getElementById("result-panel");
+    const studentName = document.getElementById("student-name");
+    const studentDni = document.getElementById("student-dni");
+    const studentScore = document.getElementById("student-score");
+    const studentDependencia = document.getElementById("student-dependencia");
+    const studentArea = document.getElementById("student-area");
+    const studentSede = document.getElementById("student-sede");
+    const studentAula = document.getElementById("student-aula");
+    const studentSalon = document.getElementById("student-salon");
+    const studentStatus = document.getElementById("student-status");
+    const studentMessage = document.getElementById("student-message");
+    const statusBadge = document.getElementById("status-badge");
+    const scoreCard = document.getElementById("score-card");
+
+    const statusMap = {
+      ok: {
+        badge: "Resultado registrado",
+        label: "Correcto",
+        tone: "success"
+      },
+      aula_vacia: {
+        badge: "Aula no registrada",
+        label: "Aula no registrada",
+        tone: "warning"
+      },
+      sin_lectura: {
+        badge: "Resultado en revision",
+        label: "Sin lectura",
+        tone: "warning"
+      },
+      puntaje_vacio: {
+        badge: "Puntaje no registrado",
+        label: "Puntaje vacio",
+        tone: "warning"
+      },
+      puntaje_cero: {
+        badge: "Puntaje 0.00",
+        label: "Puntaje cero",
+        tone: "danger"
+      }
+    };
+
+    function sanitizeDni(value) {
+      return (value || "").replace(/\D+/g, "").slice(0, 16);
+    }
+
+    function queueFocus(delay = 80) {
+      window.clearTimeout(window.__resultFocusTimer);
+      window.__resultFocusTimer = window.setTimeout(() => {
+        if (document.hidden) {
+          return;
+        }
+        input.focus({ preventScroll: true });
+        input.setSelectionRange(input.value.length, input.value.length);
+      }, delay);
+    }
+
+    function showFeedback(message, type) {
+      feedback.hidden = false;
+      feedback.textContent = message;
+      feedback.className = `feedback ${type}`;
+    }
+
+    function formatScore(value) {
+      const number = Number(value || 0);
+      return number.toFixed(2);
+    }
+
+    function renderResult(payload) {
+      const state = statusMap[payload.estado_resultado] || statusMap.ok;
+      const needsAttention = payload.puntaje === 0 || payload.estado_resultado !== "ok";
+
+      studentName.textContent = payload.nombre_completo;
+      studentDni.textContent = payload.dni;
+      studentScore.textContent = formatScore(payload.puntaje);
+      studentDependencia.textContent = payload.dependencia || "-";
+      studentArea.textContent = payload.area || "-";
+      studentSede.textContent = payload.sede || "-";
+      studentAula.textContent = payload.aula || "No registrada";
+      studentSalon.textContent = payload.salon_referencia || "No disponible";
+      studentStatus.textContent = state.label;
+      studentMessage.textContent = payload.mensaje_estudiante;
+
+      statusBadge.textContent = state.badge;
+      statusBadge.className = `badge ${state.tone}`;
+      scoreCard.classList.toggle("warning", needsAttention);
+
+      resultPanel.hidden = false;
+    }
+
+    async function lookupResult(dni) {
+      submitButton.disabled = true;
+      showFeedback("Consultando resultado...", "info");
+
+      try {
+        const response = await fetch(`/api/public/resultados/${encodeURIComponent(dni)}`, {
+          headers: {
+            "Accept": "application/json"
+          }
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.detail || "No se pudo consultar el resultado.");
+        }
+
+        renderResult(data);
+        showFeedback("Resultado encontrado.", "info");
+      } catch (error) {
+        resultPanel.hidden = true;
+        const message = error instanceof Error ? error.message : "Error inesperado.";
+        showFeedback(message, "error");
+      } finally {
+        submitButton.disabled = false;
+        queueFocus();
+      }
+    }
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const dni = sanitizeDni(input.value);
+
+      if (dni.length < 8) {
+        showFeedback("Ingresa un DNI valido.", "error");
+        queueFocus();
+        return;
+      }
+
+      lookupResult(dni);
+    });
+
+    input.addEventListener("input", () => {
+      const cleanValue = sanitizeDni(input.value);
+      if (input.value !== cleanValue) {
+        input.value = cleanValue;
+      }
+    });
+
+    clearButton.addEventListener("click", () => {
+      input.value = "";
+      resultPanel.hidden = true;
+      showFeedback("Ingresa tu DNI para consultar tu resultado.", "info");
+      queueFocus();
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) {
+        queueFocus();
+      }
+    });
+
+    showFeedback("Ingresa tu DNI para consultar tu resultado.", "info");
+    queueFocus(120);
+  </script>
+</body>
+</html>

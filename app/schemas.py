@@ -62,6 +62,68 @@ class PanelAttendanceResponse(BaseModel):
     alumno: Alumno
 
 
+class Resultado(BaseModel):
+    dni: str
+    paterno: str
+    materno: str
+    nombres: str
+    nombre_completo: str
+    cod_plaza: str
+    plaza: str
+    dependencia: str
+    aula: str
+    litho_ide: str
+    lectura_nro_ide: str
+    cod_examen: str
+    litho_res: str
+    lectura_nro_res: str
+    respuestas: str
+    puntaje: float
+    puntaje_reportado: float | None
+    puntaje_original: str
+    puntaje_fue_completado: bool
+    puntaje_es_cero: bool
+    respuestas_vacias: bool
+    estado_resultado: str
+    mensaje_estudiante: str
+    fila_excel: int
+    alumno: Alumno | None = None
+
+
+class ResultadoBusquedaResponse(BaseModel):
+    total: int
+    limite: int
+    offset: int
+    items: list[Resultado]
+
+
+class ResultadoResumenResponse(BaseModel):
+    total_resultados: int
+    total_con_puntaje_reportado: int
+    total_sin_puntaje_reportado: int
+    total_puntaje_cero: int
+    total_normalizados_a_cero: int
+    puntaje_promedio_reportado: float
+    puntaje_maximo_reportado: float
+    puntaje_minimo_reportado: float
+    resultados_por_estado: dict[str, int]
+    source_file: str
+    generated_at: str
+
+
+class ResultadoConsultaResponse(BaseModel):
+    dni: str
+    nombre_completo: str
+    puntaje: float
+    dependencia: str
+    area: str
+    sede: str
+    aula: str
+    salon_referencia: str
+    estado_resultado: str
+    mensaje_estudiante: str
+
+
 class Evento(BaseModel):
     institucion: str
     organizador: str

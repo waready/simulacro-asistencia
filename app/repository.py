@@ -9,7 +9,7 @@ from time import monotonic
 from typing import Any, Protocol
 
 from app.config import Settings
-from app.importer import build_dataset, normalize_text
+from app.importer import build_dataset, build_results_summary, normalize_text
 from app.mysql_storage import (
     ensure_mysql_schema,
     get_mysql_connection,
@@ -31,12 +31,26 @@ class IndexedStudent:
     sede_key: str
 
 
+@dataclass(slots=True)
+class IndexedResult:
+    result: dict[str, Any]
+    search_blob: str
+    dependencia_key: str
+    estado_key: str
+
+
 class Repository(Protocol):
     def load(self) -> None: ...
 
     def summary(self) -> dict[str, Any]: ...
 
+    def results_summary(self) -> dict[str, Any]: ...
+
     def get_student_by_dni(self, dni: str) -> dict[str, Any] | None: ...
+
+    def get_result_by_dni(self, dni: str) -> dict[str, Any] | None: ...
+
+    def get_public_result_by_dni(self, dni: str) -> dict[str, Any] | None: ...
 
     def search_students(
         self,
@@ -46,6 +60,20 @@ class Repository(Protocol):
         area: str | None = None,
         salon: str | None = None,
         sede: str | None = None,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> tuple[int, list[dict[str, Any]]]: ...
+
+    def search_results(
+        self,
+        *,
+        dni: str | None = None,
+        q: str | None = None,
+        dependencia: str | None = None,
+        estado_resultado: str | None = None,
+        only_zero: bool = False,
+        puntaje_min: float | None = None,
+        puntaje_max: float | None = None,
         limit: int | None = None,
         offset: int = 0,
     ) -> tuple[int, list[dict[str, Any]]]: ...
@@ -67,6 +95,133 @@ def build_indexed_student(student: dict[str, Any]) -> IndexedStudent:
         salon_key=normalize_text(student["salon"]),
         sede_key=normalize_text(student["sede"]),
     )
+
+
+def normalize_result_record(result: dict[str, Any]) -> dict[str, Any]:
+    puntaje_reportado_raw = result.get("puntaje_reportado")
+    puntaje_original = str(result.get("puntaje_original", "") or "")
+    puntaje_reportado = None if puntaje_reportado_raw in (None, "") else float(puntaje_reportado_raw)
+    puntaje = float(result.get("puntaje", 0) or 0)
+    respuestas = str(result.get("respuestas", "") or "")
+
+    return {
+        "dni": str(result.get("dni", "") or ""),
+        "paterno": str(result.get("paterno", "") or ""),
+        "materno": str(result.get("materno", "") or ""),
+        "nombres": str(result.get("nombres", "") or ""),
+        "nombre_completo": str(result.get("nombre_completo", "") or ""),
+        "cod_plaza": str(result.get("cod_plaza", "") or ""),
+        "plaza": str(result.get("plaza", "") or ""),
+        "dependencia": str(result.get("dependencia", "") or ""),
+        "aula": str(result.get("aula", "") or ""),
+        "litho_ide": str(result.get("litho_ide", "") or ""),
+        "lectura_nro_ide": str(result.get("lectura_nro_ide", "") or ""),
+        "cod_examen": str(result.get("cod_examen", "") or ""),
+        "litho_res": str(result.get("litho_res", "") or ""),
+        "lectura_nro_res": str(result.get("lectura_nro_res", "") or ""),
+        "respuestas": respuestas,
+        "puntaje": puntaje,
+        "puntaje_reportado": puntaje_reportado,
+        "puntaje_original": puntaje_original,
+        "puntaje_fue_completado": bool(result.get("puntaje_fue_completado", puntaje_reportado is not None)),
+        "puntaje_es_cero": bool(result.get("puntaje_es_cero", puntaje == 0)),
+        "respuestas_vacias": bool(result.get("respuestas_vacias", not "".join(respuestas.split()))),
+        "estado_resultado": str(result.get("estado_resultado", "") or ""),
+        "fila_excel": int(result.get("fila_excel", 0) or 0),
+    }
+
+
+def build_indexed_result(result: dict[str, Any]) -> IndexedResult:
+    return IndexedResult(
+        result=result,
+        search_blob=normalize_text(
+            " ".join(
+                [
+                    result["dni"],
+                    result["paterno"],
+                    result["materno"],
+                    result["nombres"],
+                    result["nombre_completo"],
+                    result["dependencia"],
+                    result["cod_examen"],
+                    result["aula"],
+                    result["estado_resultado"],
+                ]
+            )
+        ),
+        dependencia_key=normalize_text(result["dependencia"]),
+        estado_key=normalize_text(result["estado_resultado"]),
+    )
+
+
+def build_result_student_message(result: dict[str, Any], student: dict[str, Any] | None) -> str:
+    state = str(result.get("estado_resultado", "") or "")
+    salon_referencia = ""
+    if student is not None:
+        salon_referencia = str(student.get("salon", "") or "")
+
+    if state == "sin_lectura":
+        return (
+            "Tu puntaje aparece en 0.00 porque el archivo no registró lectura de respuestas para tu DNI. "
+            "Para la siguiente evaluación, revisa que marques bien tu ficha y tus datos antes de entregar el examen."
+        )
+    if state == "puntaje_vacio":
+        return (
+            "Tu puntaje aparece en 0.00 porque el archivo llegó sin puntaje registrado para tu DNI. "
+            "Para la siguiente evaluación, verifica tus datos y consulta con coordinación si vuelve a ocurrir."
+        )
+    if state == "puntaje_cero":
+        return (
+            "Tu puntaje oficial es 0.00 según el archivo registrado. "
+            "Para la siguiente evaluación, revisa con calma el marcado de respuestas y tus datos antes de entregar el examen."
+        )
+    if state == "aula_vacia":
+        if salon_referencia:
+            return (
+                f"Tu puntaje fue registrado, pero el aula no figura en el archivo de resultados. "
+                f"Como referencia, en el padrón apareces en {salon_referencia}. "
+                "Para la siguiente evaluación, verifica que tu aula y tus datos queden bien registrados."
+            )
+        return (
+            "Tu puntaje fue registrado, pero el aula no figura en el archivo de resultados. "
+            "Para la siguiente evaluación, verifica que tu aula y tus datos queden bien registrados."
+        )
+    return (
+        "Tu resultado fue registrado correctamente. "
+        "Verifica tus datos personales antes de la siguiente evaluación."
+    )
+
+
+def serialize_result(result: dict[str, Any], students_by_dni: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    student = students_by_dni.get(result["dni"])
+    payload = dict(result)
+    payload["mensaje_estudiante"] = build_result_student_message(result, student)
+    payload["alumno"] = None if student is None else dict(student)
+    return payload
+
+
+def serialize_public_result(result: dict[str, Any], students_by_dni: dict[str, dict[str, Any]]) -> dict[str, Any]:
+    student = students_by_dni.get(result["dni"])
+    area = ""
+    sede = ""
+    salon_referencia = ""
+    if student is not None:
+        area = str(student.get("area", "") or "")
+        sede = str(student.get("sede", "") or "")
+        salon_referencia = str(student.get("salon", "") or "")
+
+    return {
+        "dni": result["dni"],
+        "nombre_completo": result["nombre_completo"],
+        "puntaje": float(result["puntaje"]),
+        "dependencia": result["dependencia"],
+        "area": area,
+        "sede": sede,
+        "aula": result["aula"],
+        "salon_referencia": salon_referencia,
+        "estado_resultado": result["estado_resultado"],
+        "mensaje_estudiante": build_result_student_message(result, student),
+    }
 
 
 def build_summary(students: list[dict[str, Any]]) -> dict[str, Any]:
@@ -93,6 +248,10 @@ class JsonStudentRepository:
         self._students: list[dict[str, Any]] = []
         self._students_by_dni: dict[str, dict[str, Any]] = {}
         self._indexed_students: list[IndexedStudent] = []
+        self._results: list[dict[str, Any]] = []
+        self._results_by_dni: dict[str, dict[str, Any]] = {}
+        self._indexed_results: list[IndexedResult] = []
+        self._results_summary: dict[str, Any] | None = None
 
     def load(self) -> None:
         self._ensure_dataset_file()
@@ -101,6 +260,7 @@ class JsonStudentRepository:
             self.dataset = json.load(source)
 
         self._students = list(self.dataset.get("alumnos", []))
+        self._results = [normalize_result_record(item) for item in self.dataset.get("resultados", [])]
         self._rebuild_indexes()
 
     def summary(self) -> dict[str, Any]:
@@ -113,9 +273,26 @@ class JsonStudentRepository:
             "generated_at": self.dataset.get("generated_at", "") if self.dataset else "",
         }
 
+    def results_summary(self) -> dict[str, Any]:
+        if self._results_summary is None:
+            self._results_summary = build_results_summary(self._results)
+        return {
+            **self._results_summary,
+            "source_file": self.dataset.get("resultados_source_file", "") if self.dataset else "",
+            "generated_at": self.dataset.get("resultados_generated_at", "") if self.dataset else "",
+        }
+
     def get_student_by_dni(self, dni: str) -> dict[str, Any] | None:
         student = self._students_by_dni.get(dni)
         return None if student is None else dict(student)
+
+    def get_result_by_dni(self, dni: str) -> dict[str, Any] | None:
+        result = self._results_by_dni.get(dni)
+        return None if result is None else serialize_result(result, self._students_by_dni)
+
+    def get_public_result_by_dni(self, dni: str) -> dict[str, Any] | None:
+        result = self._results_by_dni.get(dni)
+        return None if result is None else serialize_public_result(result, self._students_by_dni)
 
     def search_students(
         self,
@@ -154,6 +331,53 @@ class JsonStudentRepository:
             if sede_key and sede_key != item.sede_key:
                 continue
             filtered.append(dict(item.student))
+
+        total = len(filtered)
+        return total, filtered[offset : offset + limit]
+
+    def search_results(
+        self,
+        *,
+        dni: str | None = None,
+        q: str | None = None,
+        dependencia: str | None = None,
+        estado_resultado: str | None = None,
+        only_zero: bool = False,
+        puntaje_min: float | None = None,
+        puntaje_max: float | None = None,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> tuple[int, list[dict[str, Any]]]:
+        if limit is None:
+            limit = self.settings.default_limit
+
+        exact_match: list[IndexedResult]
+        if dni:
+            result = self._results_by_dni.get(dni)
+            exact_match = [] if result is None else [build_indexed_result(result)]
+        else:
+            exact_match = list(self._indexed_results)
+
+        query_key = normalize_text(q) if q else None
+        dependencia_key = normalize_text(dependencia) if dependencia else None
+        estado_key = normalize_text(estado_resultado) if estado_resultado else None
+
+        filtered: list[dict[str, Any]] = []
+        for item in exact_match:
+            result = item.result
+            if query_key and query_key not in item.search_blob:
+                continue
+            if dependencia_key and dependencia_key != item.dependencia_key:
+                continue
+            if estado_key and estado_key != item.estado_key:
+                continue
+            if only_zero and not result["puntaje_es_cero"]:
+                continue
+            if puntaje_min is not None and float(result["puntaje"]) < puntaje_min:
+                continue
+            if puntaje_max is not None and float(result["puntaje"]) > puntaje_max:
+                continue
+            filtered.append(serialize_result(result, self._students_by_dni))
 
         total = len(filtered)
         return total, filtered[offset : offset + limit]
@@ -204,22 +428,43 @@ class JsonStudentRepository:
                 raise FileNotFoundError(
                     "No data source found. Set SIMULACRO_EXCEL_PATH or generate the JSON dataset first."
                 )
-            build_dataset(self.settings.excel_path, self.settings.data_json_path)
+            build_dataset(
+                self.settings.excel_path,
+                self.settings.data_json_path,
+                results_excel_path=self.settings.results_excel_path if self.settings.results_excel_path and self.settings.results_excel_path.exists() else None,
+            )
             return
+
+        source_mtimes = [self.settings.data_json_path.stat().st_mtime]
+        latest_source_mtime = source_mtimes[0]
+        if self.settings.excel_path is not None and self.settings.excel_path.exists():
+            latest_source_mtime = max(latest_source_mtime, self.settings.excel_path.stat().st_mtime)
+        if self.settings.results_excel_path is not None and self.settings.results_excel_path.exists():
+            latest_source_mtime = max(latest_source_mtime, self.settings.results_excel_path.stat().st_mtime)
 
         if (
             self.settings.auto_rebuild_data
-            and self.settings.excel_path is not None
-            and self.settings.excel_path.exists()
-            and self.settings.excel_path.stat().st_mtime > self.settings.data_json_path.stat().st_mtime
+            and latest_source_mtime > self.settings.data_json_path.stat().st_mtime
         ):
-            build_dataset(self.settings.excel_path, self.settings.data_json_path)
+            if self.settings.excel_path is None or not self.settings.excel_path.exists():
+                raise FileNotFoundError(
+                    "No student source Excel was found to rebuild the JSON dataset."
+                )
+            build_dataset(
+                self.settings.excel_path,
+                self.settings.data_json_path,
+                results_excel_path=self.settings.results_excel_path if self.settings.results_excel_path and self.settings.results_excel_path.exists() else None,
+            )
 
     def _rebuild_indexes(self) -> None:
         for student in self._students:
             student["asistencia"] = bool(student.get("asistencia", False))
         self._students_by_dni = {student["dni"]: student for student in self._students}
         self._indexed_students = [build_indexed_student(student) for student in self._students]
+        self._results = [normalize_result_record(result) for result in self._results]
+        self._results_by_dni = {result["dni"]: result for result in self._results}
+        self._indexed_results = [build_indexed_result(result) for result in self._results]
+        self._results_summary = build_results_summary(self._results)
 
     def _event_payload(self) -> dict[str, Any]:
         if self.dataset is None:
@@ -249,7 +494,11 @@ class MySQLStudentRepository:
         self._students: list[dict[str, Any]] = []
         self._students_by_dni: dict[str, dict[str, Any]] = {}
         self._indexed_students: list[IndexedStudent] = []
+        self._results: list[dict[str, Any]] = []
+        self._results_by_dni: dict[str, dict[str, Any]] = {}
+        self._indexed_results: list[IndexedResult] = []
         self._summary: dict[str, Any] | None = None
+        self._results_summary: dict[str, Any] | None = None
         self._event: dict[str, Any] = {
             "institucion": "",
             "organizador": "",
@@ -257,6 +506,8 @@ class MySQLStudentRepository:
         }
         self._source_file = ""
         self._generated_at = ""
+        self._results_source_file = ""
+        self._results_generated_at = ""
         self._snapshot_loaded_at = 0.0
 
     def load(self) -> None:
@@ -271,11 +522,23 @@ class MySQLStudentRepository:
         with get_mysql_connection(self.settings) as connection:
             with connection.cursor() as cursor:
                 cursor.execute(f"SELECT COUNT(*) AS total FROM `{self.settings.db_students_table}`")
-                total = int(cursor.fetchone()["total"])
+                total_students = int(cursor.fetchone()["total"])
+                cursor.execute(f"SELECT COUNT(*) AS total FROM `{self.settings.db_results_table}`")
+                total_results = int(cursor.fetchone()["total"])
 
-        if total == 0 and self.settings.db_auto_seed and self.settings.excel_path and self.settings.excel_path.exists():
-            dataset = build_dataset(self.settings.excel_path)
-            load_dataset_to_mysql(dataset, self.settings, truncate=True)
+        should_seed_students = total_students == 0
+        should_seed_results = total_results == 0 and self.settings.results_excel_path and self.settings.results_excel_path.exists()
+        if (
+            self.settings.db_auto_seed
+            and self.settings.excel_path
+            and self.settings.excel_path.exists()
+            and (should_seed_students or should_seed_results)
+        ):
+            dataset = build_dataset(
+                self.settings.excel_path,
+                results_excel_path=self.settings.results_excel_path if self.settings.results_excel_path and self.settings.results_excel_path.exists() else None,
+            )
+            load_dataset_to_mysql(dataset, self.settings, truncate=should_seed_students)
 
         self._refresh_snapshot(force=True)
 
@@ -290,10 +553,30 @@ class MySQLStudentRepository:
             "generated_at": self._generated_at,
         }
 
+    def results_summary(self) -> dict[str, Any]:
+        self._ensure_snapshot()
+        if self._results_summary is None:
+            self._results_summary = build_results_summary(self._results)
+        return {
+            **self._results_summary,
+            "source_file": self._results_source_file,
+            "generated_at": self._results_generated_at,
+        }
+
     def get_student_by_dni(self, dni: str) -> dict[str, Any] | None:
         self._ensure_snapshot()
         student = self._students_by_dni.get(dni)
         return None if student is None else dict(student)
+
+    def get_result_by_dni(self, dni: str) -> dict[str, Any] | None:
+        self._ensure_snapshot()
+        result = self._results_by_dni.get(dni)
+        return None if result is None else serialize_result(result, self._students_by_dni)
+
+    def get_public_result_by_dni(self, dni: str) -> dict[str, Any] | None:
+        self._ensure_snapshot()
+        result = self._results_by_dni.get(dni)
+        return None if result is None else serialize_public_result(result, self._students_by_dni)
 
     def search_students(
         self,
@@ -333,6 +616,54 @@ class MySQLStudentRepository:
             if sede_key and sede_key != item.sede_key:
                 continue
             filtered.append(dict(item.student))
+
+        total = len(filtered)
+        return total, filtered[offset : offset + limit]
+
+    def search_results(
+        self,
+        *,
+        dni: str | None = None,
+        q: str | None = None,
+        dependencia: str | None = None,
+        estado_resultado: str | None = None,
+        only_zero: bool = False,
+        puntaje_min: float | None = None,
+        puntaje_max: float | None = None,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> tuple[int, list[dict[str, Any]]]:
+        self._ensure_snapshot()
+        if limit is None:
+            limit = self.settings.default_limit
+
+        exact_match: list[IndexedResult]
+        if dni:
+            result = self._results_by_dni.get(dni)
+            exact_match = [] if result is None else [build_indexed_result(result)]
+        else:
+            exact_match = list(self._indexed_results)
+
+        query_key = normalize_text(q) if q else None
+        dependencia_key = normalize_text(dependencia) if dependencia else None
+        estado_key = normalize_text(estado_resultado) if estado_resultado else None
+
+        filtered: list[dict[str, Any]] = []
+        for item in exact_match:
+            result = item.result
+            if query_key and query_key not in item.search_blob:
+                continue
+            if dependencia_key and dependencia_key != item.dependencia_key:
+                continue
+            if estado_key and estado_key != item.estado_key:
+                continue
+            if only_zero and not result["puntaje_es_cero"]:
+                continue
+            if puntaje_min is not None and float(result["puntaje"]) < puntaje_min:
+                continue
+            if puntaje_max is not None and float(result["puntaje"]) > puntaje_max:
+                continue
+            filtered.append(serialize_result(result, self._students_by_dni))
 
         total = len(filtered)
         return total, filtered[offset : offset + limit]
@@ -468,6 +799,35 @@ class MySQLStudentRepository:
             "asistencia": bool(row.get("asistencia", 0)),
         }
 
+    def _map_result(self, row: dict[str, Any]) -> dict[str, Any]:
+        return normalize_result_record(
+            {
+                "dni": row["dni"],
+                "paterno": row["paterno"],
+                "materno": row["materno"],
+                "nombres": row["nombres"],
+                "nombre_completo": row["nombre_completo"],
+                "cod_plaza": row["cod_plaza"],
+                "plaza": row["plaza"],
+                "dependencia": row["dependencia"],
+                "aula": row["aula"],
+                "litho_ide": row["litho_ide"],
+                "lectura_nro_ide": row["lectura_nro_ide"],
+                "cod_examen": row["cod_examen"],
+                "litho_res": row["litho_res"],
+                "lectura_nro_res": row["lectura_nro_res"],
+                "respuestas": row["respuestas"],
+                "puntaje": float(row["puntaje"]),
+                "puntaje_reportado": None if row.get("puntaje_reportado") is None else float(row["puntaje_reportado"]),
+                "puntaje_original": row["puntaje_original"],
+                "puntaje_fue_completado": bool(row.get("puntaje_fue_completado", 0)),
+                "puntaje_es_cero": bool(row.get("puntaje_es_cero", 0)),
+                "respuestas_vacias": bool(row.get("respuestas_vacias", 0)),
+                "estado_resultado": row["estado_resultado"],
+                "fila_excel": int(row["fila_excel"]),
+            }
+        )
+
     def _payload_to_db_row(self, student: dict[str, Any]) -> tuple[Any, ...]:
         return (
             student["numero_orden"],
@@ -515,17 +875,44 @@ class MySQLStudentRepository:
 
                     cursor.execute(
                         f"""
-                        SELECT institucion, organizador, titulo, source_file, generated_at
+                        SELECT
+                            institucion,
+                            organizador,
+                            titulo,
+                            source_file,
+                            generated_at,
+                            results_source_file,
+                            results_generated_at
                         FROM `{self.settings.db_event_table}`
                         WHERE id = 1
                         """
                     )
                     event_row = cursor.fetchone() or {}
 
+                    cursor.execute(
+                        f"""
+                        SELECT
+                            dni, paterno, materno, nombres, nombre_completo,
+                            cod_plaza, plaza, dependencia, aula,
+                            litho_ide, lectura_nro_ide, cod_examen,
+                            litho_res, lectura_nro_res, respuestas,
+                            puntaje, puntaje_reportado, puntaje_original,
+                            puntaje_fue_completado, puntaje_es_cero, respuestas_vacias,
+                            estado_resultado, fila_excel
+                        FROM `{self.settings.db_results_table}`
+                        ORDER BY fila_excel, dni
+                        """
+                    )
+                    results = [self._map_result(row) for row in cursor.fetchall()]
+
             self._students = students
             self._students_by_dni = {student["dni"]: student for student in students}
             self._indexed_students = [build_indexed_student(student) for student in students]
             self._summary = build_summary(students)
+            self._results = results
+            self._results_by_dni = {result["dni"]: result for result in results}
+            self._indexed_results = [build_indexed_result(result) for result in results]
+            self._results_summary = build_results_summary(results)
             self._event = {
                 "institucion": event_row.get("institucion", ""),
                 "organizador": event_row.get("organizador", ""),
@@ -533,6 +920,8 @@ class MySQLStudentRepository:
             }
             self._source_file = event_row.get("source_file", "") or ""
             self._generated_at = str(event_row.get("generated_at", "") or "")
+            self._results_source_file = event_row.get("results_source_file", "") or ""
+            self._results_generated_at = str(event_row.get("results_generated_at", "") or "")
             self._snapshot_loaded_at = monotonic()
 
 

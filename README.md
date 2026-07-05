@@ -9,6 +9,7 @@ Microservicio en FastAPI para exponer el Excel del simulacro como una API lista 
 - En modo `mysql` crea y usa tablas dentro de tu base `simulacro_aulas`.
 - En modo `json` deja un respaldo local por si quieres probar sin MySQL.
 - Permite buscar por `dni`, nombre, sede, area o salon.
+- Permite exponer resultados por `dni`, dependencia, estado o rango de puntaje.
 - Puede proteger el acceso con `X-API-Key`.
 
 ## Estructura esperada
@@ -26,13 +27,14 @@ Usa `.env.example` como referencia:
 
 - `SIMULACRO_STORAGE_BACKEND`: `mysql` para produccion o `json` para pruebas.
 - `SIMULACRO_EXCEL_PATH`: ruta del Excel original.
+- `SIMULACRO_RESULTS_EXCEL_PATH`: ruta del Excel de puntajes.
 - `SIMULACRO_DATA_JSON`: ruta del JSON normalizado que genera la API.
 - `SIMULACRO_API_KEY`: token opcional para asegurar el acceso.
 - `SIMULACRO_AUTO_REBUILD_DATA`: si es `true`, regenera el JSON cuando el Excel cambia.
 - `SIMULACRO_DEFAULT_LIMIT`: limite por defecto.
 - `SIMULACRO_MAX_LIMIT`: limite maximo por consulta.
 - `SIMULACRO_DB_HOST`, `SIMULACRO_DB_PORT`, `SIMULACRO_DB_NAME`, `SIMULACRO_DB_USER`, `SIMULACRO_DB_PASSWORD`: conexion MySQL.
-- `SIMULACRO_DB_STUDENTS_TABLE`, `SIMULACRO_DB_EVENT_TABLE`: nombres de tablas.
+- `SIMULACRO_DB_STUDENTS_TABLE`, `SIMULACRO_DB_EVENT_TABLE`, `SIMULACRO_DB_RESULTS_TABLE`: nombres de tablas.
 - `SIMULACRO_DB_AUTO_SEED`: si es `true`, la API llena MySQL automaticamente cuando la tabla este vacia y exista el Excel.
 - `SIMULACRO_MYSQL_CACHE_TTL_SECONDS`: segundos que dura el snapshot en memoria cuando usas MySQL.
 - `SIMULACRO_CORS_ORIGINS`: origins permitidos por CORS, separados por coma.
@@ -55,13 +57,13 @@ La ruta recomendada para tu caso es `mysql`, porque ya tienes la base `simulacro
 Importacion directa a MySQL:
 
 ```powershell
-python -m app.mysql_loader --excel "C:\ruta\archivo.xlsx" --mode mysql
+python -m app.mysql_loader --excel "C:\ruta\alumnos.xlsx" --results-excel "C:\ruta\puntajes.xlsx" --mode mysql
 ```
 
 Si prefieres subirlo desde phpMyAdmin, genera primero un `.sql`:
 
 ```powershell
-python -m app.mysql_loader --excel "C:\ruta\archivo.xlsx" --mode sql --out ".\data\simulacro_aulas_dump.sql"
+python -m app.mysql_loader --excel "C:\ruta\alumnos.xlsx" --results-excel "C:\ruta\puntajes.xlsx" --mode sql --out ".\data\simulacro_aulas_dump.sql"
 ```
 
 Ese archivo lo puedes importar en phpMyAdmin dentro de la base `simulacro_aulas`.
@@ -71,7 +73,7 @@ Ese archivo lo puedes importar en phpMyAdmin dentro de la base `simulacro_aulas`
 Si quieres generar el JSON manualmente para pruebas:
 
 ```powershell
-python -m app.importer --excel "C:\ruta\archivo.xlsx" --out ".\data\simulacro_dataset.json"
+python -m app.importer --excel "C:\ruta\alumnos.xlsx" --results-excel "C:\ruta\puntajes.xlsx" --out ".\data\simulacro_dataset.json"
 ```
 
 ## Endpoints principales
@@ -79,8 +81,15 @@ python -m app.importer --excel "C:\ruta\archivo.xlsx" --out ".\data\simulacro_da
 - `GET /health`
 - `GET /`
 - `GET /panel`
+- `GET /resultados`
 - `POST /api/panel/asistencia`
+- `GET /api/public/resultados/{dni}`
 - `GET /api/v1/resumen`
+- `GET /api/v1/resultados/resumen`
+- `GET /api/v1/resultados/{dni}`
+- `GET /api/v1/resultados?solo_cero=true`
+- `GET /api/v1/resultados?dependencia=SOCIALES&puntaje_min=1000`
+- `GET /api/v1/resultados?estado_resultado=sin_lectura`
 - `GET /api/v1/alumnos/{dni}`
 - `GET /api/v1/alumnos?dni=60681300`
 - `GET /api/v1/alumnos?q=abado`
@@ -91,6 +100,33 @@ python -m app.importer --excel "C:\ruta\archivo.xlsx" --out ".\data\simulacro_da
 - `DELETE /api/v1/alumnos/{dni}`
 
 `/` sirve el panel HTML mobile-first para toma de asistencia. `/panel` redirige al inicio y el panel consume `POST /api/panel/asistencia` en una sola llamada para buscar por DNI, marcar `asistencia=true` y devolver los datos del alumno para el modal de confirmacion.
+
+`/resultados` sirve un portal HTML simple para estudiantes. Consulta por `dni` usando `GET /api/public/resultados/{dni}` y muestra el puntaje junto con una observacion clara cuando el caso sea `0.00`, `sin_lectura`, `puntaje_vacio` o `aula_vacia`.
+
+## API de resultados
+
+El segundo Excel de puntajes se normaliza en la tabla `simulacro_resultados` y en el JSON bajo `resultados`.
+
+Filtros disponibles en `GET /api/v1/resultados`:
+
+- `dni`: busqueda exacta.
+- `q`: busqueda libre por DNI, nombres, dependencia, aula o estado.
+- `dependencia`: filtro exacto.
+- `estado_resultado`: `ok`, `sin_lectura`, `puntaje_vacio`, `aula_vacia`, `puntaje_cero`.
+- `solo_cero=true`: devuelve puntajes finales en `0`, incluidos los vacios normalizados.
+- `puntaje_min` y `puntaje_max`: rango numerico.
+
+Hallazgo en el Excel `05-07-2026_15-26-19_lista_postulantes - copia.xlsx`:
+
+- Hay `3200` registros de resultados y coinciden con los `3200` DNIs del padron.
+- No aparecieron puntajes `0` reportados explicitamente.
+- Hay `257` filas con `PUNTAJE` vacio.
+- De esas filas, `256` quedaron como `sin_lectura` y `1` como `puntaje_vacio`.
+- Ademas hay `4` registros con `aula_vacia` pero con puntaje valido.
+- Esas filas se normalizan a `puntaje=0` para poder filtrarlas sin perder trazabilidad.
+- Cuando eso pasa, la API conserva `puntaje_reportado=null`, `puntaje_original=""` y marca `puntaje_fue_completado=false`.
+- El campo `estado_resultado` ayuda a distinguir si el `0` viene de `sin_lectura`, `puntaje_vacio` o de un `puntaje_cero` real si apareciera despues.
+- La respuesta del resultado incluye `mensaje_estudiante` para explicar el caso al alumno con un texto breve y directo.
 
 Si defines `SIMULACRO_API_KEY`, envia el header:
 
@@ -162,6 +198,7 @@ Recomendacion practica:
 - Ejecuta `uvicorn` detras de `nginx` y levanta 2 workers si usas el plan de 2 GB.
 - Si Laravel consulta por `dni`, agrega cache en Laravel por 30 a 120 segundos para bajar aun mas la carga.
 - Cuando usas backend `mysql`, la API mantiene un snapshot en memoria y por defecto lo refresca cada `60` segundos. Eso hace que `GET /api/v1/alumnos/{dni}` sea mucho mas rapido.
+- Ese mismo snapshot acelera `GET /api/v1/resultados/{dni}` y los filtros de puntajes.
 
 ## Recomendacion para tu arquitectura
 
