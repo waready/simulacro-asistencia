@@ -79,22 +79,19 @@ def get_repository(request: Request) -> Repository:
 
 
 @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
-def panel_inicio() -> FileResponse:
+@app.api_route("/resultados", methods=["GET", "HEAD"], include_in_schema=False)
+def portal_resultados() -> FileResponse:
     return FileResponse(
-        PANEL_HTML_PATH,
+        RESULTS_HTML_PATH,
         headers={"Cache-Control": "no-store, max-age=0"},
     )
 
 
 @app.api_route("/panel", methods=["GET", "HEAD"], include_in_schema=False)
-def panel_redirect() -> RedirectResponse:
-    return RedirectResponse(url="/", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
-
-
-@app.api_route("/resultados", methods=["GET", "HEAD"], include_in_schema=False)
-def portal_resultados() -> FileResponse:
+@app.api_route("/asistencia", methods=["GET", "HEAD"], include_in_schema=False)
+def panel_inicio() -> FileResponse:
     return FileResponse(
-        RESULTS_HTML_PATH,
+        PANEL_HTML_PATH,
         headers={"Cache-Control": "no-store, max-age=0"},
     )
 
@@ -133,8 +130,8 @@ def api_root() -> dict[str, str]:
         "message": "Simulacro API activa.",
         "docs": "/docs",
         "health": "/health",
-        "panel": "/",
-        "portal_resultados": "/resultados",
+        "panel": "/panel",
+        "portal_resultados": "/",
         "resumen": "/api/v1/resumen",
         "resultados": "/api/v1/resultados",
         "resultados_resumen": "/api/v1/resultados/resumen",

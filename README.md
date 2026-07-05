@@ -81,6 +81,7 @@ python -m app.importer --excel "C:\ruta\alumnos.xlsx" --results-excel "C:\ruta\p
 - `GET /health`
 - `GET /`
 - `GET /panel`
+- `GET /asistencia`
 - `GET /resultados`
 - `POST /api/panel/asistencia`
 - `GET /api/public/resultados/{dni}`
@@ -99,9 +100,11 @@ python -m app.importer --excel "C:\ruta\alumnos.xlsx" --results-excel "C:\ruta\p
 - `PATCH /api/v1/alumnos/{dni}/asistencia`
 - `DELETE /api/v1/alumnos/{dni}`
 
-`/` sirve el panel HTML mobile-first para toma de asistencia. `/panel` redirige al inicio y el panel consume `POST /api/panel/asistencia` en una sola llamada para buscar por DNI, marcar `asistencia=true` y devolver los datos del alumno para el modal de confirmacion.
+`/` y `/resultados` sirven el portal HTML de consulta de resultados para estudiantes.
 
-`/resultados` sirve un portal HTML simple para estudiantes. Consulta por `dni` usando `GET /api/public/resultados/{dni}` y muestra el puntaje junto con una observacion clara cuando el caso sea `0.00`, `sin_lectura`, `puntaje_vacio` o `aula_vacia`.
+`/panel` y `/asistencia` sirven el panel HTML mobile-first para toma de asistencia. El panel consume `POST /api/panel/asistencia` en una sola llamada para buscar por DNI, marcar `asistencia=true` y devolver los datos del alumno para el modal de confirmacion.
+
+La consulta por resultados usa `GET /api/public/resultados/{dni}` y muestra el puntaje junto con una observacion clara cuando el caso sea `0.00`, `sin_lectura`, `puntaje_vacio` o `aula_vacia`.
 
 ## API de resultados
 
